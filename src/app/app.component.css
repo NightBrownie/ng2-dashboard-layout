@@ -30,7 +30,11 @@
 
   background: indianred;
 
-  cursor: pointer;
+  cursor: grab;
+}
+
+.draggable-container_dragging .draggable-container__header {
+  cursor: grabbing;
 }
 
 .draggable-container__body {

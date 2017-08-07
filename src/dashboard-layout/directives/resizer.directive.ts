@@ -1,7 +1,7 @@
 import {Directive} from "@angular/core";
 
 @Directive({
-  selector: 'resizer'
+  selector: '[resizer]'
 })
 export class ResizerDirective {
 }

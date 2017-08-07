@@ -1,21 +1,30 @@
-import {Directive, OnInit, ViewChildren} from "@angular/core";
+import {
+  AfterContentInit, ContentChildren, Directive, ElementRef, Input, OnDestroy, OnInit, QueryList
+} from "@angular/core";
 
 import {DashboardLayoutService} from "../services/dashboard-layout.service";
 import {DraggerDirective} from "./dragger.directive";
 
 
 @Directive({
-  selector: 'draggable'
+  selector: '[draggable]'
 })
-export class DraggableDirective implements OnInit {
+export class DraggableDirective implements OnInit, OnDestroy, AfterContentInit {
+  @Input() private draggable: boolean;
+  @ContentChildren(DraggerDirective) private draggers: QueryList<DraggerDirective>;
 
-  @ViewChildren(DraggerDirective)
-  private draggers: Array<DraggerDirective>;
+  constructor(private element: ElementRef,
+    private dashboardLayoutService: DashboardLayoutService
+  ) {
 
-  constructor(private dashboardLayoutService: DashboardLayoutService) {
   }
 
   ngOnInit(): void {
-    throw new Error("Method not implemented.");
+  }
+
+  ngAfterContentInit(): void {
+  }
+
+  ngOnDestroy(): void {
   }
 }

@@ -1,7 +1,7 @@
-import {Directive} from "@angular/core";
+import { Directive } from "@angular/core";
 
 @Directive({
-  selector: 'dragger'
+  selector: '[dragger]'
 })
 export class DraggerDirective {
 }

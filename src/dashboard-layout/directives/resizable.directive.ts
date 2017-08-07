@@ -1,7 +1,7 @@
 import {Directive} from "@angular/core";
 
 @Directive({
-  selector: 'resizable'
+  selector: '[resizable]'
 })
 export class ResizableDirective {
 }

@@ -13,6 +13,12 @@ import {DashboardLayoutService} from "./services/dashboard-layout.service";
     ResizableDirective,
     ResizerDirective
   ],
+  exports: [
+    DraggableDirective,
+    DraggerDirective,
+    ResizableDirective,
+    ResizerDirective
+  ],
   providers: [
     DashboardLayoutService
   ]
