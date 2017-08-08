@@ -22,6 +22,11 @@
   background: forestgreen;
 }
 
+.draggable-container_inner {
+  min-height: 100px;
+  min-width: 100px;
+}
+
 .draggable-container__header {
   width: 100%;
   height: 30px;
