@@ -1,22 +1,24 @@
 import {
   Directive,
-  ElementRef,
   HostListener,
-} from "@angular/core";
+} from '@angular/core';
+import {Subject} from 'rxjs/Subject';
 
-import {DashboardLayoutService} from "../services/dashboard-layout.service";
-import {CoordinatesModel} from "../models/coordinates.model";
+import {CoordinatesModel} from '../models';
 
 
 @Directive({
   selector: '[drag-handle]'
 })
 export class DragHandleDirective {
-  @HostListener('mousedown', ['$event.clientX', '$event.clientY'])
-  private onMouseDown(x, y) {
-    this.dashboardLayoutService.startDrag(this, new CoordinatesModel(x, y));
+  private _dragStartSubject: Subject<CoordinatesModel> = new Subject<CoordinatesModel>();
+
+  public get dragStartSubject(): Subject<CoordinatesModel> {
+    return this._dragStartSubject;
   }
 
-  constructor(private element: ElementRef, private dashboardLayoutService: DashboardLayoutService) {
+  @HostListener('mousedown', ['$event.clientX', '$event.clientY'])
+  private onMouseDown(x, y) {
+    this.dragStartSubject.next(new CoordinatesModel(x, y));
   }
 }

@@ -1,10 +1,7 @@
-import {Injectable} from "@angular/core";
+import {Injectable} from '@angular/core';
 
-import {DashboardLayoutItem} from "../interfaces/dashboard-layout-item.interface";
-import {DragHandleDirective} from "../directives/drag-handle.directive";
-import {DraggableDirective} from "../directives/draggable.directive";
-import {CoordinatesModel} from "../models/coordinates.model";
-import {OffsetModel} from "../models/offset.model";
+import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
+import {OffsetModel} from '../models';
 
 
 @Injectable()
@@ -15,20 +12,16 @@ export class DashboardLayoutService {
     = new Map<HTMLElement, ClientRect>();
   private dashboardLayoutItemContainerMap: Map<DashboardLayoutItem, HTMLElement>
     = new Map<DashboardLayoutItem, HTMLElement>();
-  private dashboardLayoutItemClientBoundingRectMap: Map<DashboardLayoutItem, ClientRect>
-    = new Map<DashboardLayoutItem, ClientRect>();
-  private dragHandleDashboardLayoutItemMap: Map<DragHandleDirective, DashboardLayoutItem>
-    = new Map<DragHandleDirective, DashboardLayoutItem>();
 
   constructor() {
   }
 
   public registerDashboardLayoutItem(dashboardLayoutItem: DashboardLayoutItem, containerElement: HTMLElement) {
-    let dashboardLayoutItems = this.containerElementDashboardLayoutItemsMap.get(containerElement);
+    const dashboardLayoutItems = this.containerElementDashboardLayoutItemsMap.get(containerElement);
 
     if (!dashboardLayoutItems) {
       this.containerElementDashboardLayoutItemsMap.set(containerElement, [dashboardLayoutItem]);
-    } else if(!dashboardLayoutItems.includes(dashboardLayoutItem)) {
+    } else if (!dashboardLayoutItems.includes(dashboardLayoutItem)) {
       dashboardLayoutItems.push(dashboardLayoutItem);
     }
 
@@ -36,7 +29,7 @@ export class DashboardLayoutService {
   }
 
   public unregisterDashboardLayoutItem(dashboardLayoutItem: DashboardLayoutItem) {
-    let containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
 
     if (containerElement) {
       this.dashboardLayoutItemContainerMap.delete(dashboardLayoutItem);
@@ -52,44 +45,69 @@ export class DashboardLayoutService {
     }
   }
 
-  public registerDragHandle(dragHandleDirective: DragHandleDirective, draggableDirective: DraggableDirective): void {
-    this.dragHandleDashboardLayoutItemMap.set(dragHandleDirective, draggableDirective);
-  }
+  public startDrag(dashboardLayoutItem: DashboardLayoutItem) {
+    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
 
-  public unregisterDragHandle(dragHandleDirective: DragHandleDirective): void {
-    this.dragHandleDashboardLayoutItemMap.delete(dragHandleDirective);
-  }
-
-  // TODO: move this out of service
-  public startDrag(dragHandleDirective: DragHandleDirective, coordinates: CoordinatesModel) {
-    let dashboardLayoutItem = this.dragHandleDashboardLayoutItemMap.get(dragHandleDirective);
-    if (dashboardLayoutItem) {
-      this.dashboardLayoutItemClientBoundingRectMap.set(dashboardLayoutItem,
-        dashboardLayoutItem.getElementClientBoundingRect());
-      let containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    if (containerElement) {
       this.containerClientBoundingRectMap.set(containerElement, containerElement.getBoundingClientRect());
-
-      dashboardLayoutItem.startDrag(coordinates);
     }
   }
 
   public drag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
-    let containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
 
     if (containerElement) {
-      let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
-      let dashboardLayoutItemBoundingClientRect = this.dashboardLayoutItemClientBoundingRectMap.get(dashboardLayoutItem);
-
-      dashboardLayoutItem.setTranslate(offset);
+      dashboardLayoutItem.setTranslate(this.getPossibleOffset(containerElement, dashboardLayoutItem, offset));
     }
   }
 
-  public endDrag(dashboardLayoutItem: DashboardLayoutItem, coordinates: CoordinatesModel) {
-    let containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+  public endDrag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
+    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
 
     if (containerElement) {
-      let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
-      let dashboardLayoutItemBoundingClientRect = this.dashboardLayoutItemClientBoundingRectMap.get(dashboardLayoutItem);
+      const possibleOffset = this.getPossibleOffset(containerElement, dashboardLayoutItem, offset);
+
+      dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
+      dashboardLayoutItem.setSize();
     }
+  }
+
+  private getPossibleOffset(
+    containerElement: HTMLElement,
+    dashboardLayoutItem: DashboardLayoutItem,
+    offset: OffsetModel
+  ): OffsetModel {
+    let possibleXOffset = 0;
+    let possibleYOffset = 0;
+
+    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
+    if (!containerBoundingClientRect) {
+      containerBoundingClientRect = containerElement.getBoundingClientRect();
+      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
+    }
+
+    const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+
+    if (layoutItemBoundingClientRect.left + offset.x >= containerBoundingClientRect.left
+      && layoutItemBoundingClientRect.right + offset.x <= containerBoundingClientRect.right
+    ) {
+      possibleXOffset = offset.x;
+    } else if (layoutItemBoundingClientRect.width <= containerBoundingClientRect.width
+      && layoutItemBoundingClientRect.right + offset.x > containerBoundingClientRect.right
+    ) {
+      possibleXOffset = containerBoundingClientRect.right - layoutItemBoundingClientRect.right;
+    }
+
+    if (layoutItemBoundingClientRect.top + offset.y >= containerBoundingClientRect.top
+      && layoutItemBoundingClientRect.bottom + offset.y <= containerBoundingClientRect.bottom
+    ) {
+      possibleYOffset = offset.y;
+    } else if (layoutItemBoundingClientRect.height <= containerBoundingClientRect.height
+      && layoutItemBoundingClientRect.bottom + offset.y > containerBoundingClientRect.bottom
+    ) {
+      possibleYOffset = containerBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
+    }
+
+    return new OffsetModel(possibleXOffset, possibleYOffset);
   }
 }

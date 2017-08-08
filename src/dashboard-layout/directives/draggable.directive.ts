@@ -1,77 +1,73 @@
 import {
   AfterContentInit, ContentChildren, Directive, ElementRef, HostBinding, HostListener, Input, OnDestroy, OnInit,
   QueryList
-} from "@angular/core";
+} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 
-import {DashboardLayoutService} from "../services/dashboard-layout.service";
-import {DragHandleDirective} from "./drag-handle.directive";
-import {DashboardLayoutItem} from "../interfaces/dashboard-layout-item.interface";
-import {Subscription} from "rxjs/Subscription";
-import {CoordinatesModel} from "../models/coordinates.model";
-import {OffsetModel} from "../models/offset.model";
+import {DashboardLayoutService} from '../services/dashboard-layout.service';
+import {DragHandleDirective} from './drag-handle.directive';
+import {CoordinatesModel} from '../models';
+import {DashboardLayoutItemDirective} from './dashboard-layout-item.directive';
 
 
 @Directive({
   selector: '[draggable]'
 })
-export class DraggableDirective implements DashboardLayoutItem, OnInit, OnDestroy, AfterContentInit {
+export class DraggableDirective extends DashboardLayoutItemDirective
+  implements OnDestroy, AfterContentInit
+{
   private startDragCoordinates: CoordinatesModel;
-  private dragStartSubs: Subscription;
+  private cachedElementClientBoundingRect: ClientRect;
+  private dragHandleSubs: Subscription[] = [];
 
   @Input() private draggable: boolean;
   @ContentChildren(DragHandleDirective) private dragHandles: QueryList<DragHandleDirective>;
-  @HostBinding('style.transform')
-  private transform: string;
 
   @HostListener('window:mousemove', ['$event.clientX', '$event.clientY'])
   private onMouseMove(x, y) {
     if (this.startDragCoordinates) {
-      this.dashboardLayoutService.drag(this, this.getOffset(this.startDragCoordinates, new CoordinatesModel(x, y)));
+      this.drag(new CoordinatesModel(x, y));
     }
   }
 
   @HostListener('window:mouseup', ['$event.clientX', '$event.clientY'])
   private onMouseUp(x, y) {
     if (this.startDragCoordinates) {
-      this.dashboardLayoutService.endDrag(this, new CoordinatesModel(x, y));
-      this.startDragCoordinates = null;
+      this.endDrag(new CoordinatesModel(x, y));
     }
   }
 
-  constructor(private element: ElementRef, private dashboardLayoutService: DashboardLayoutService) {
+  constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
+    super(element, dashboardLayoutService);
   }
-
-  ngOnInit() {
-    this.dashboardLayoutService.registerDashboardLayoutItem(this, this.element.nativeElement.parentElement);
-  }
-
 
   ngAfterContentInit(): void {
-    this.dragHandles.forEach(dragHandle => this.dashboardLayoutService.registerDragHandle(dragHandle, this));
+    this.dragHandleSubs = this.dragHandles.map(dragHandle =>
+      dragHandle.dragStartSubject.subscribe(dragStartCoordinates => this.startDrag(dragStartCoordinates)));
   }
 
   ngOnDestroy(): void {
-    this.dragHandles.forEach(dragHandle => this.dashboardLayoutService.unregisterDragHandle(dragHandle));
+    this.dragHandleSubs.forEach(dragHandleSubscription => dragHandleSubscription.unsubscribe());
     this.dashboardLayoutService.unregisterDashboardLayoutItem(this);
   }
 
   getElementClientBoundingRect(): ClientRect {
-    return this.element.nativeElement.getBoundingClientRect();
+    return this.cachedElementClientBoundingRect || super.getElementClientBoundingRect();
   }
 
-  startDrag(startDragCoordinates: CoordinatesModel) {
-    this.startDragCoordinates = startDragCoordinates;
+  private startDrag(dragStartCoordinates: CoordinatesModel) {
+    this.startDragCoordinates = dragStartCoordinates;
+    this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
+    this.dashboardLayoutService.startDrag(this);
   }
 
-  setTranslate(offset: OffsetModel) {
-    this.transform = `translate(${offset.x}px, ${offset.y}px)`;
+  private drag(dragCoordinates: CoordinatesModel) {
+    this.dashboardLayoutService.drag(this, this.getOffset(this.startDragCoordinates, dragCoordinates));
   }
 
-  setOffset(coordinates: CoordinatesModel) {
-  }
-
-  private getOffset(dragStartMouseCoordinates: CoordinatesModel, coordinates: CoordinatesModel) {
-    return dragStartMouseCoordinates && coordinates
-      && new OffsetModel(coordinates.x - dragStartMouseCoordinates.x, coordinates.y - dragStartMouseCoordinates.y);
+  private endDrag(dragEndCoordinates: CoordinatesModel) {
+    this.dashboardLayoutService.endDrag(this, dragEndCoordinates);
+    this.startDragCoordinates = null;
+    this.cachedElementClientBoundingRect = null;
   }
 }
