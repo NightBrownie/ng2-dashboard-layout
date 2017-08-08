@@ -12,6 +12,9 @@
 .draggable-container {
   position: absolute;
 
+  display: flex;
+  flex-direction: column;
+
   min-height: 300px;
   min-width: 300px;
 
@@ -45,4 +48,5 @@
 }
 
 .draggable-container__body {
+  flex: 1;
 }
