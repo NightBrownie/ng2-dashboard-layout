@@ -3,7 +3,7 @@ import {
 } from "@angular/core";
 
 import {DashboardLayoutService} from "../services/dashboard-layout.service";
-import {DraggerDirective} from "./dragger.directive";
+import {DragHandleDirective} from "./drag-handle.directive";
 
 
 @Directive({
@@ -11,7 +11,7 @@ import {DraggerDirective} from "./dragger.directive";
 })
 export class DraggableDirective implements OnInit, OnDestroy, AfterContentInit {
   @Input() private draggable: boolean;
-  @ContentChildren(DraggerDirective) private draggers: QueryList<DraggerDirective>;
+  @ContentChildren(DragHandleDirective) private draggers: QueryList<DragHandleDirective>;
 
   constructor(private element: ElementRef,
     private dashboardLayoutService: DashboardLayoutService

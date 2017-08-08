@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import {DraggableDirective} from "./directives/draggable.directive";
-import {DraggerDirective} from "./directives/dragger.directive";
+import {DragHandleDirective} from "./directives/drag-handle.directive";
 import {ResizableDirective} from "./directives/resizable.directive";
 import {ResizerDirective} from "./directives/resizer.directive";
 import {DashboardLayoutService} from "./services/dashboard-layout.service";
@@ -9,13 +9,13 @@ import {DashboardLayoutService} from "./services/dashboard-layout.service";
 @NgModule({
   declarations: [
     DraggableDirective,
-    DraggerDirective,
+    DragHandleDirective,
     ResizableDirective,
     ResizerDirective
   ],
   exports: [
     DraggableDirective,
-    DraggerDirective,
+    DragHandleDirective,
     ResizableDirective,
     ResizerDirective
   ],
