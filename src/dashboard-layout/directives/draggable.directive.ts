@@ -13,7 +13,7 @@ import {DashboardLayoutItemDirective} from './dashboard-layout-item.directive';
 @Directive({
   selector: '[draggable]'
 })
-export class DraggableDirective extends DashboardLayoutItemDirective implements OnDestroy, AfterContentInit {
+export class DraggableDirective extends DashboardLayoutItemDirective implements AfterContentInit, OnDestroy {
   private startDragCoordinates: CoordinatesModel;
   private cachedElementClientBoundingRect: ClientRect;
   private dragHandleSubs: Subscription[] = [];

@@ -11,11 +11,11 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   @HostBinding('style.transform')
   private transform: string;
 
-  @HostBinding('style.left')
-  private xCoordinate: string;
+  @HostBinding('style.left.%')
+  private xCoordinate: number;
 
-  @HostBinding('style.top')
-  private yCoordinate: string;
+  @HostBinding('style.top.%')
+  private yCoordinate: number;
 
   constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
   }
@@ -35,8 +35,8 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   }
 
   setPosition(coordinates: CoordinatesModel) {
-    this.xCoordinate = `${coordinates.x}%`;
-    this.yCoordinate = `${coordinates.y}%`;
+    this.xCoordinate = coordinates.x;
+    this.yCoordinate = coordinates.y;
   }
 
   setScale() {
