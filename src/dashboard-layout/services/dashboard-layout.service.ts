@@ -3,7 +3,7 @@ import {Injectable} from '@angular/core';
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
 import {OffsetModel} from '../models';
 import {DEFAULT_PRESCISION_CHARS} from '../constants/config';
-import {CoordinatesModel} from "../models/coordinates.model";
+import {CoordinatesModel} from '../models/coordinates.model';
 
 
 @Injectable()

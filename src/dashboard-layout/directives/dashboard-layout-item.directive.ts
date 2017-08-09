@@ -5,7 +5,7 @@ import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface
 import {CoordinatesModel, OffsetModel} from '../models';
 
 @Directive({
-  selector: '[dashboard-layout-item]'
+  selector: '[dashboardLayoutItem]'
 })
 export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit {
   @HostBinding('style.transform')

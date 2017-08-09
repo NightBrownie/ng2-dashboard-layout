@@ -8,7 +8,7 @@ import {CoordinatesModel} from '../models';
 
 
 @Directive({
-  selector: '[drag-handle]'
+  selector: '[dragHandle]'
 })
 export class DragHandleDirective {
   private _dragStartSubject: Subject<CoordinatesModel> = new Subject<CoordinatesModel>();
