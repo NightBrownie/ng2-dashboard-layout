@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
 import {OffsetModel} from '../models';
-import {DEFAULT_PRESCISION_CHARS} from '../constants/config';
+import {DEFAULT_PRESCISION_CHARS} from '../constants/default-config';
 import {CoordinatesModel} from '../models/coordinates.model';
 
 
@@ -125,9 +125,9 @@ export class DashboardLayoutService {
 
     return new CoordinatesModel(
       Number((coordinates.x / containerBoundingClientRect.width * 100)
-        .toPrecision(DEFAULT_PRESCISION_CHARS)),
+        .toFixed(DEFAULT_PRESCISION_CHARS)),
       Number((coordinates.y / containerBoundingClientRect.height * 100)
-        .toPrecision(DEFAULT_PRESCISION_CHARS))
+        .toFixed(DEFAULT_PRESCISION_CHARS))
     );
   }
 

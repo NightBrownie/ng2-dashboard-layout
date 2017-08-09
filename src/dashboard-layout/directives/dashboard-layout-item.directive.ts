@@ -29,7 +29,9 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   }
 
   setTranslate(offset: OffsetModel) {
-    this.transform = `translate(${offset.x}px, ${offset.y}px)`;
+    this.transform = offset.x !== 0 || offset.y !== 0
+      ? `translate(${offset.x}px, ${offset.y}px)`
+      : '';
   }
 
   setPosition(coordinates: CoordinatesModel) {
