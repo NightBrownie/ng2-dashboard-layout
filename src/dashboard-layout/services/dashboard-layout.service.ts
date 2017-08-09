@@ -2,6 +2,8 @@ import {Injectable} from '@angular/core';
 
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
 import {OffsetModel} from '../models';
+import {DEFAULT_PRESCISION_CHARS} from '../constants/config';
+import {CoordinatesModel} from "../models/coordinates.model";
 
 
 @Injectable()
@@ -67,8 +69,16 @@ export class DashboardLayoutService {
     if (containerElement) {
       const possibleOffset = this.getPossibleOffset(containerElement, dashboardLayoutItem, offset);
 
+      console.log(possibleOffset);
+
+      const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
+      const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+      const updatedCoordinates = new CoordinatesModel(
+        layoutItemBoundingClientRect.left - containerBoundingClientRect.left  + possibleOffset.x,
+        layoutItemBoundingClientRect.top - containerBoundingClientRect.top + possibleOffset.y
+      );
+      dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
       dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
-      dashboardLayoutItem.setSize();
     }
   }
 
@@ -80,12 +90,7 @@ export class DashboardLayoutService {
     let possibleXOffset = 0;
     let possibleYOffset = 0;
 
-    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
-    if (!containerBoundingClientRect) {
-      containerBoundingClientRect = containerElement.getBoundingClientRect();
-      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
-    }
-
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
 
     if (layoutItemBoundingClientRect.left + offset.x >= containerBoundingClientRect.left
@@ -96,6 +101,8 @@ export class DashboardLayoutService {
       && layoutItemBoundingClientRect.right + offset.x > containerBoundingClientRect.right
     ) {
       possibleXOffset = containerBoundingClientRect.right - layoutItemBoundingClientRect.right;
+    } else {
+      possibleXOffset = containerBoundingClientRect.left - layoutItemBoundingClientRect.left;
     }
 
     if (layoutItemBoundingClientRect.top + offset.y >= containerBoundingClientRect.top
@@ -106,8 +113,31 @@ export class DashboardLayoutService {
       && layoutItemBoundingClientRect.bottom + offset.y > containerBoundingClientRect.bottom
     ) {
       possibleYOffset = containerBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
+    } else {
+      possibleYOffset = containerBoundingClientRect.top - layoutItemBoundingClientRect.top;
     }
 
     return new OffsetModel(possibleXOffset, possibleYOffset);
+  }
+
+  private getPercentageCoordinates(containerElement: HTMLElement, coordinates: CoordinatesModel): CoordinatesModel {
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
+
+    return new CoordinatesModel(
+      Number((coordinates.x / containerBoundingClientRect.width * 100)
+        .toPrecision(DEFAULT_PRESCISION_CHARS)),
+      Number((coordinates.y / containerBoundingClientRect.height * 100)
+        .toPrecision(DEFAULT_PRESCISION_CHARS))
+    );
+  }
+
+  private getContainerBoundingClientRect(containerElement: HTMLElement): ClientRect {
+    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
+    if (!containerBoundingClientRect) {
+      containerBoundingClientRect = containerElement.getBoundingClientRect();
+      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
+    }
+
+    return containerBoundingClientRect;
   }
 }

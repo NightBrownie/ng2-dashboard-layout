@@ -49,4 +49,6 @@
 
 .draggable-container__body {
   flex: 1;
+
+  position: relative;
 }

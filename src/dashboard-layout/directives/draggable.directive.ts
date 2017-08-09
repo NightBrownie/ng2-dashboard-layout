@@ -1,5 +1,5 @@
 import {
-  AfterContentInit, ContentChildren, Directive, ElementRef, HostBinding, HostListener, Input, OnDestroy, OnInit,
+  AfterContentInit, ContentChildren, Directive, ElementRef, HostListener, Input, OnDestroy,
   QueryList
 } from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
@@ -66,7 +66,7 @@ export class DraggableDirective extends DashboardLayoutItemDirective
   }
 
   private endDrag(dragEndCoordinates: CoordinatesModel) {
-    this.dashboardLayoutService.endDrag(this, dragEndCoordinates);
+    this.dashboardLayoutService.endDrag(this, this.getOffset(this.startDragCoordinates, dragEndCoordinates));
     this.startDragCoordinates = null;
     this.cachedElementClientBoundingRect = null;
   }
