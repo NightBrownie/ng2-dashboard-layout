@@ -69,14 +69,14 @@ export class DashboardLayoutService {
     if (containerElement) {
       const possibleOffset = this.getPossibleOffset(containerElement, dashboardLayoutItem, offset);
 
-      console.log(possibleOffset);
-
       const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
       const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+
       const updatedCoordinates = new CoordinatesModel(
         layoutItemBoundingClientRect.left - containerBoundingClientRect.left  + possibleOffset.x,
         layoutItemBoundingClientRect.top - containerBoundingClientRect.top + possibleOffset.y
       );
+
       dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
       dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
     }

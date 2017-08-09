@@ -25,6 +25,10 @@
   background: forestgreen;
 }
 
+.draggable-container_dragging {
+  background: pink;
+}
+
 .draggable-container_inner {
   min-height: 100px;
   min-width: 100px;
@@ -41,6 +45,8 @@
   background: indianred;
 
   cursor: grab;
+
+  user-select: none;
 }
 
 .draggable-container_dragging .draggable-container__header {

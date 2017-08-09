@@ -7,4 +7,9 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'app';
+
+  public firstContainerDragging;
+  public firstContainerInnerDragging;
+  public secondContainerDragging;
+  public secondContainerInnerDragging;
 }

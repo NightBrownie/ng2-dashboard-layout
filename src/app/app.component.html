@@ -2,19 +2,23 @@
   <div
     class="draggable-container"
     draggable
+    [(dragging)]="firstContainerDragging"
+    [ngClass]="{'draggable-container_dragging': firstContainerDragging}"
   >
     <div
       class="draggable-container__header"
-      drag-handle
+      dragHandle
     >Test draggable 1</div>
     <div class="draggable-container__body">
       <div
         class="draggable-container draggable-container_inner"
         draggable
+        [(dragging)]="firstContainerInnerDragging"
+        [ngClass]="{'draggable-container_dragging': firstContainerInnerDragging}"
       >
         <div
           class="draggable-container__header"
-          drag-handle
+          dragHandle
         >Inner test draggable 1</div>
         <div
           class="draggable-container__body"
@@ -25,19 +29,23 @@
   <div
     class="draggable-container"
     draggable
+    [(dragging)]="secondContainerDragging"
+    [ngClass]="{'draggable-container_dragging': secondContainerDragging}"
   >
     <div
       class="draggable-container__header"
-      drag-handle
+      dragHandle
     >Test draggable 2</div>
     <div class="draggable-container__body">
       <div
         class="draggable-container draggable-container_inner"
         draggable
+        [(dragging)]="secondContainerInnerDragging"
+        [ngClass]="{'draggable-container_dragging': secondContainerInnerDragging}"
       >
         <div
           class="draggable-container__header"
-          drag-handle
+          dragHandle
         >Inner test draggable 2</div>
         <div
           class="draggable-container__body"

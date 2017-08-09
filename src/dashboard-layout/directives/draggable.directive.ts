@@ -1,5 +1,5 @@
 import {
-  AfterContentInit, ContentChildren, Directive, ElementRef, HostListener, Input, OnDestroy,
+  AfterContentInit, ContentChildren, Directive, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output,
   QueryList
 } from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
@@ -19,6 +19,9 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
   private dragHandleSubs: Subscription[] = [];
 
   @Input() private draggable: boolean;
+  @Input() private dragging: boolean;
+  @Output() private draggingChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+
   @ContentChildren(DragHandleDirective) private dragHandles: QueryList<DragHandleDirective>;
 
   @HostListener('window:mousemove', ['$event.clientX', '$event.clientY'])
@@ -57,6 +60,7 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.startDragCoordinates = dragStartCoordinates;
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
     this.dashboardLayoutService.startDrag(this);
+    this.draggingChange.next(true);
   }
 
   private drag(dragCoordinates: CoordinatesModel) {
@@ -67,5 +71,6 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.dashboardLayoutService.endDrag(this, this.getOffset(this.startDragCoordinates, dragEndCoordinates));
     this.startDragCoordinates = null;
     this.cachedElementClientBoundingRect = null;
+    this.draggingChange.next(false);
   }
 }
