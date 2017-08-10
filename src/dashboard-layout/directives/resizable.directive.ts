@@ -15,6 +15,7 @@ import {ResizeStartModel} from '../models/resize-start.model';
 })
 export class ResizableDirective extends DashboardLayoutItemDirective implements AfterContentInit, OnDestroy {
   private startResizeCoordinates: CoordinatesModel;
+  private startResizeDirection: string;
   private cachedElementClientBoundingRect: ClientRect;
   private resizerSubs: Subscription[] = [];
 
@@ -26,7 +27,7 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
 
   ngAfterContentInit(): void {
     this.resizerSubs = this.resizers.map(resizer => resizer.resizeStartSubject.subscribe(
-      resizeStartCoordinates => this.startResize(resizeStartCoordinates)));
+      resizeStartModel => this.startResize(resizeStartModel)));
   }
 
   ngOnDestroy(): void {
@@ -36,7 +37,10 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
 
   private startResize(resizeStart: ResizeStartModel) {
     this.startResizeCoordinates = resizeStart.coordinates;
+    this.startResizeDirection = resizeStart.resizeDirection;
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
+
+    this.dashboardLayoutService.startResize(this);
     this.resizingChange.next(true);
   }
 }

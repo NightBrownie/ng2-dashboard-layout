@@ -48,11 +48,7 @@ export class DashboardLayoutService {
   }
 
   public startDrag(dashboardLayoutItem: DashboardLayoutItem) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
-
-    if (containerElement) {
-      this.containerClientBoundingRectMap.set(containerElement, containerElement.getBoundingClientRect());
-    }
+    this.startDashboardOperation(dashboardLayoutItem);
   }
 
   public drag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
@@ -79,6 +75,25 @@ export class DashboardLayoutService {
 
       dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
       dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
+    }
+  }
+
+  public startResize(dashboardLayoutItem: DashboardLayoutItem) {
+    this.startDashboardOperation(dashboardLayoutItem);
+  }
+
+  public resize() {
+
+  }
+
+  public endResize() {
+  }
+
+  private startDashboardOperation(dashboardLayoutItem: DashboardLayoutItem) {
+    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+
+    if (containerElement) {
+      this.containerClientBoundingRectMap.set(containerElement, containerElement.getBoundingClientRect());
     }
   }
 

@@ -2,6 +2,7 @@
   <div
     class="draggable-container"
     draggable
+    resizable
     [(dragging)]="firstContainerDragging"
     [ngClass]="{'draggable-container_dragging': firstContainerDragging}"
   >
@@ -13,6 +14,7 @@
       <div
         class="draggable-container draggable-container_inner"
         draggable
+        resizable
         [(dragging)]="firstContainerInnerDragging"
         [ngClass]="{'draggable-container_dragging': firstContainerInnerDragging}"
       >
@@ -93,6 +95,7 @@
   <div
     class="draggable-container"
     draggable
+    resizable
     [(dragging)]="secondContainerDragging"
     [ngClass]="{'draggable-container_dragging': secondContainerDragging}"
   >
@@ -104,6 +107,7 @@
       <div
         class="draggable-container draggable-container_inner"
         draggable
+        resizable
         [(dragging)]="secondContainerInnerDragging"
       [ngClass]="{'draggable-container_dragging': secondContainerInnerDragging}"
       >
