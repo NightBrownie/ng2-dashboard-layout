@@ -10,7 +10,7 @@ import {ResizeStartModel} from '../models/resize-start.model';
   selector: '[resizer]'
 })
 export class ResizerDirective {
-  @Input('resizer') resizer: ResizeDirection;
+  @Input('resizer') resizer: ResizeDirection = ResizeDirection.ne;
 
   private _resizeStartSubject: Subject<ResizeStartModel> = new Subject<ResizeStartModel>();
 

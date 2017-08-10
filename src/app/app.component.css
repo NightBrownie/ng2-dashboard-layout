@@ -25,15 +25,6 @@
   background: forestgreen;
 }
 
-.draggable-container_dragging {
-  background: pink;
-}
-
-.draggable-container_inner {
-  min-height: 100px;
-  min-width: 100px;
-}
-
 .draggable-container__header {
   width: 100%;
   height: 30px;
@@ -49,12 +40,99 @@
   user-select: none;
 }
 
-.draggable-container_dragging .draggable-container__header {
-  cursor: grabbing;
-}
-
 .draggable-container__body {
   flex: 1;
 
   position: relative;
+}
+
+.draggable-container_dragging {
+  background: pink;
+}
+
+.draggable-container_dragging .draggable-container__header {
+  cursor: grabbing;
+}
+
+.draggable-container_inner {
+  min-height: 100px;
+  min-width: 100px;
+}
+
+.resizer {
+  position: absolute;
+}
+
+.resizer_horizontal {
+  height: 3px;
+}
+
+.resizer_vertical {
+  width: 3px;
+}
+
+.resizer_corner {
+  height: 3px;
+  width: 3px;
+}
+
+.resizer_n {
+  top: 0;
+  left: 0;
+  right: 0;
+
+  cursor: ns-resize;
+}
+
+.resizer_s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  cursor: ns-resize;
+}
+
+.resizer_e {
+  top: 0;
+  left: 0;
+  bottom: 0;
+
+  cursor: ew-resize;
+}
+
+.resizer_w {
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  cursor: ew-resize;
+}
+
+.resizer_ne {
+  left: 0;
+  top: 0;
+
+  cursor: nwse-resize;
+}
+
+.resizer_nw {
+  top: 0;
+  right: 0;
+
+
+  cursor: nesw-resize;
+}
+
+.resizer_se {
+  bottom: 0;
+  left: 0;
+
+  cursor: nesw-resize;
+}
+
+.resizer_sw {
+  bottom: 0;
+  right: 0;
+
+  cursor: nwse-resize;
 }
