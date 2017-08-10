@@ -43,4 +43,24 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     this.dashboardLayoutService.startResize(this);
     this.resizingChange.next(true);
   }
+
+  private resize(resizeCoordinates: CoordinatesModel) {
+    this.dashboardLayoutService.resize(
+      this,
+      this.getOffset(this.startResizeCoordinates, resizeCoordinates),
+      this.startResizeDirection
+    );
+  }
+
+  private resizeEnd(resizeEndCoordinates: CoordinatesModel) {
+    this.dashboardLayoutService.endResize(
+      this,
+      this.getOffset(this.startResizeCoordinates, resizeEndCoordinates),
+      this.startResizeDirection
+    );
+
+    this.startResizeCoordinates = null;
+    this.cachedElementClientBoundingRect = null;
+    this.resizingChange.next(false);
+  }
 }
