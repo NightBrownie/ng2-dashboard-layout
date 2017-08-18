@@ -7,6 +7,7 @@ import {ResizerDirective} from './directives/resizer.directive';
 import {DashboardLayoutService} from './services/dashboard-layout.service';
 import {DashboardLayoutItemDirective} from './directives/dashboard-layout-item.directive';
 
+
 @NgModule({
   declarations: [
     DashboardLayoutItemDirective,

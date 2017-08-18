@@ -56,6 +56,7 @@ export class DashboardLayoutService {
 
     if (containerElement) {
       dashboardLayoutItem.setTranslate(this.getPossibleOffset(containerElement, dashboardLayoutItem, offset));
+      dashboardLayoutItem.updateTransform();
     }
   }
 
@@ -75,6 +76,7 @@ export class DashboardLayoutService {
 
       dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
       dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
+      dashboardLayoutItem.updateTransform();
     }
   }
 

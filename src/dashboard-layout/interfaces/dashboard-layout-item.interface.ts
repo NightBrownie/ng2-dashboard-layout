@@ -1,11 +1,11 @@
-import {CoordinatesModel, OffsetModel} from '../models';
+import {CoordinatesModel, OffsetModel, ScaleModel, SizeModel} from '../models';
+
 
 export interface DashboardLayoutItem {
   getElementClientBoundingRect(): ClientRect;
   setTranslate(offset: OffsetModel);
   setPosition(coordinates: CoordinatesModel);
-
-  // TODO: update when start implementing resize functionality
-  setScale();
-  setSize();
+  setScale(scale: ScaleModel);
+  setSize(size: SizeModel);
+  updateTransform();
 }
