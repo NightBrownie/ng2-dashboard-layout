@@ -1,5 +1,5 @@
 import {
-  AfterContentInit, ContentChildren, Directive, EventEmitter, Input, OnDestroy, Output,
+  AfterContentInit, ContentChildren, Directive, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output,
   QueryList
 } from '@angular/core';
 
@@ -8,6 +8,7 @@ import {CoordinatesModel} from '../models/coordinates.model';
 import {Subscription} from 'rxjs/Subscription';
 import {ResizerDirective} from './resizer.directive';
 import {ResizeStartModel} from '../models/resize-start.model';
+import {DashboardLayoutService} from '../services/dashboard-layout.service';
 
 
 @Directive({
@@ -25,6 +26,24 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
 
   @ContentChildren(ResizerDirective) private resizers: QueryList<ResizerDirective>;
 
+  @HostListener('window:mousemove', ['$event.clientX', '$event.clientY'])
+  private onMouseMove(x, y) {
+    if (this.startResizeCoordinates) {
+      this.resize(new CoordinatesModel(x, y));
+    }
+  }
+
+  @HostListener('window:mouseup', ['$event.clientX', '$event.clientY'])
+  private onMouseUp(x, y) {
+    if (this.startResizeCoordinates) {
+      this.resizeEnd(new CoordinatesModel(x, y));
+    }
+  }
+
+  constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
+    super(element, dashboardLayoutService);
+  }
+
   ngAfterContentInit(): void {
     this.resizerSubs = this.resizers.map(resizer => resizer.resizeStartSubject.subscribe(
       resizeStartModel => this.startResize(resizeStartModel)));
@@ -33,6 +52,10 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
   ngOnDestroy(): void {
     this.resizerSubs.forEach(resizerSubscription => resizerSubscription.unsubscribe());
     this.dashboardLayoutService.unregisterDashboardLayoutItem(this);
+  }
+
+  getElementClientBoundingRect(): ClientRect {
+    return this.cachedElementClientBoundingRect || super.getElementClientBoundingRect();
   }
 
   private startResize(resizeStart: ResizeStartModel) {

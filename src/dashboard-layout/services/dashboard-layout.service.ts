@@ -82,12 +82,16 @@ export class DashboardLayoutService {
 
   public startResize(dashboardLayoutItem: DashboardLayoutItem) {
     this.startDashboardOperation(dashboardLayoutItem);
+    console.log(1);
   }
 
   public resize(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel, resizeDirection) {
+    console.log(2);
+
   }
 
   public endResize(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel, resizeDirection) {
+    console.log(3);
   }
 
   private startDashboardOperation(dashboardLayoutItem: DashboardLayoutItem) {
