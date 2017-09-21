@@ -1,4 +1,5 @@
 import {Directive, ElementRef, HostBinding, OnInit} from '@angular/core';
+import {DomSanitizer, SafeStyle} from '@angular/platform-browser';
 
 import {DashboardLayoutService} from '../services/dashboard-layout.service';
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
@@ -14,7 +15,7 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   private transformTranslate: OffsetModel;
 
   @HostBinding('style.transform')
-  private transform: string;
+  private transform: SafeStyle;
 
   @HostBinding('style.left.%')
   private xCoordinate: number;
@@ -28,7 +29,11 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   @HostBinding('style.width')
   private width: string;
 
-  constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
+  constructor(
+    protected element: ElementRef,
+    protected dashboardLayoutService: DashboardLayoutService,
+    private sanitizer: DomSanitizer
+  ) {
   }
 
   ngOnInit() {
@@ -79,7 +84,7 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
       ? (!!transform ? ' ' : '') + `scale(${this.transformScale.x}, ${this.transformScale.y})`
       : '';
 
-    this.transform = transform;
+    this.transform = this.sanitizer.bypassSecurityTrustStyle(transform);
   }
 
   protected getOffset(dragStartMouseCoordinates: CoordinatesModel, coordinates: CoordinatesModel) {

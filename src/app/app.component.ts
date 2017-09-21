@@ -13,4 +13,9 @@ export class AppComponent {
   public firstContainerInnerDragging;
   public secondContainerDragging;
   public secondContainerInnerDragging;
+
+  public firstContainerResizing;
+  public firstContainerInnerResizing;
+  public secondContainerResizing;
+  public secondContainerInnerResizing;
 }

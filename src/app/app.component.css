@@ -15,12 +15,14 @@
   display: flex;
   flex-direction: column;
 
-  min-height: 300px;
-  min-width: 300px;
+  height: 300px;
+  width: 300px;
 
   border: 1px solid black;
   border-radius: 5px;
   box-sizing: border-box;
+
+  transform-origin: top left;
 
   background: forestgreen;
 }
@@ -50,13 +52,17 @@
   background: pink;
 }
 
+.draggable-container_resizing {
+  background: purple;
+}
+
 .draggable-container_dragging .draggable-container__header {
   cursor: grabbing;
 }
 
 .draggable-container_inner {
-  min-height: 100px;
-  min-width: 100px;
+  height: 100px;
+  width: 100px;
 }
 
 .resizer {
@@ -92,7 +98,7 @@
   cursor: ns-resize;
 }
 
-.resizer_e {
+.resizer_w {
   top: 0;
   left: 0;
   bottom: 0;
@@ -100,7 +106,7 @@
   cursor: ew-resize;
 }
 
-.resizer_w {
+.resizer_e {
   top: 0;
   right: 0;
   bottom: 0;
@@ -108,14 +114,14 @@
   cursor: ew-resize;
 }
 
-.resizer_ne {
+.resizer_nw {
   left: 0;
   top: 0;
 
   cursor: nwse-resize;
 }
 
-.resizer_nw {
+.resizer_ne {
   top: 0;
   right: 0;
 
@@ -123,14 +129,14 @@
   cursor: nesw-resize;
 }
 
-.resizer_se {
+.resizer_sw {
   bottom: 0;
   left: 0;
 
   cursor: nesw-resize;
 }
 
-.resizer_sw {
+.resizer_se {
   bottom: 0;
   right: 0;
 

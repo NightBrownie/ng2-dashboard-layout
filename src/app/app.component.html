@@ -4,7 +4,11 @@
     draggable
     resizable
     [(dragging)]="firstContainerDragging"
-    [ngClass]="{'draggable-container_dragging': firstContainerDragging}"
+    [(resizing)]="firstContainerResizing"
+    [ngClass]="{
+      'draggable-container_dragging': firstContainerDragging,
+      'draggable-container_resizing': firstContainerResizing
+    }"
   >
     <div
       class="draggable-container__header"
@@ -16,7 +20,11 @@
         draggable
         resizable
         [(dragging)]="firstContainerInnerDragging"
-        [ngClass]="{'draggable-container_dragging': firstContainerInnerDragging}"
+        [(resizing)]="firstContainerInnerResizing"
+        [ngClass]="{
+          'draggable-container_dragging': firstContainerInnerDragging,
+          'draggable-container_resizing': firstContainerInnerResizing
+        }"
       >
         <div
           class="draggable-container__header"
@@ -97,7 +105,11 @@
     draggable
     resizable
     [(dragging)]="secondContainerDragging"
-    [ngClass]="{'draggable-container_dragging': secondContainerDragging}"
+    [(resizing)]="secondContainerResizing"
+    [ngClass]="{
+      'draggable-container_dragging': secondContainerDragging,
+      'draggable-container_resizing': secondContainerResizing
+    }"
   >
     <div
       class="draggable-container__header"
@@ -109,7 +121,11 @@
         draggable
         resizable
         [(dragging)]="secondContainerInnerDragging"
-      [ngClass]="{'draggable-container_dragging': secondContainerInnerDragging}"
+        [(resizing)]="secondContainerInnerResizing"
+        [ngClass]="{
+          'draggable-container_dragging': secondContainerInnerDragging,
+          'draggable-container_resizing': secondContainerInnerResizing
+        }"
       >
         <div
           class="draggable-container__header"

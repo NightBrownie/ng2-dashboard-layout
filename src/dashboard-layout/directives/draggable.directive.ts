@@ -2,6 +2,7 @@ import {
   AfterContentInit, ContentChildren, Directive, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output,
   QueryList
 } from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 import {Subscription} from 'rxjs/Subscription';
 
 import {DashboardLayoutService} from '../services/dashboard-layout.service';
@@ -38,8 +39,12 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     }
   }
 
-  constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
-    super(element, dashboardLayoutService);
+  constructor(
+    protected element: ElementRef,
+    protected dashboardLayoutService: DashboardLayoutService,
+    sanitizer: DomSanitizer
+  ) {
+    super(element, dashboardLayoutService, sanitizer);
   }
 
   ngAfterContentInit(): void {

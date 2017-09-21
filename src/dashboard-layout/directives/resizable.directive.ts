@@ -2,6 +2,7 @@ import {
   AfterContentInit, ContentChildren, Directive, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output,
   QueryList
 } from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 
 import {DashboardLayoutItemDirective} from './dashboard-layout-item.directive';
 import {CoordinatesModel} from '../models/coordinates.model';
@@ -40,8 +41,12 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     }
   }
 
-  constructor(protected element: ElementRef, protected dashboardLayoutService: DashboardLayoutService) {
-    super(element, dashboardLayoutService);
+  constructor(
+    protected element: ElementRef,
+    protected dashboardLayoutService: DashboardLayoutService,
+    sanitizer: DomSanitizer
+  ) {
+    super(element, dashboardLayoutService, sanitizer);
   }
 
   ngAfterContentInit(): void {
