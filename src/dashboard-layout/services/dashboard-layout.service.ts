@@ -88,40 +88,72 @@ export class DashboardLayoutService {
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel,
     resizeDirection: string,
-    scalePreferred: boolean = true
+    minSize: SizeModel = new SizeModel(0, 0),
+    scalePreferred: boolean = false
   ) {
     const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
     const possibleOffset = this.getPossibleResizeOffset(containerElement, dashboardLayoutItem, offset, resizeDirection);
-    const possibleSize = this.getPossibleResizeSize(containerElement, dashboardLayoutItem, offset, resizeDirection);
+    const resultOffset = this.getResizeOffset(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
+    const resultSize = this.getResizeSize(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
 
     if (scalePreferred) {
-      dashboardLayoutItem.setScale(new ScaleModel(possibleSize.width / currentItemClientBoundingRect.width,
-        possibleSize.height / currentItemClientBoundingRect.height));
+      dashboardLayoutItem.setScale(new ScaleModel(resultSize.width / currentItemClientBoundingRect.width,
+        resultSize.height / currentItemClientBoundingRect.height));
     } else {
-      dashboardLayoutItem.setSize(possibleSize);
+      dashboardLayoutItem.setSize(resultSize);
     }
 
-    dashboardLayoutItem.setTranslate(possibleOffset);
+    dashboardLayoutItem.setTranslate(resultOffset);
     dashboardLayoutItem.updateTransform();
   }
 
-  public endResize(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel, resizeDirection) {
+  public endResize(
+    dashboardLayoutItem: DashboardLayoutItem,
+    offset: OffsetModel,
+    resizeDirection,
+    minSize: SizeModel = new SizeModel(0, 0)
+  ) {
     const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
     const possibleOffset = this.getPossibleResizeOffset(containerElement, dashboardLayoutItem, offset, resizeDirection);
-    const possibleSize = this.getPossibleResizeSize(containerElement, dashboardLayoutItem, offset, resizeDirection);
+    const resultOffset = this.getResizeOffset(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
+    const resultSize = this.getResizeSize(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
+
+    if (resultOffset.x + currentItemClientBoundingRect.width < 0) {
+      resultOffset.x = 0;
+    } else if (resultOffset.x > currentItemClientBoundingRect.width) {
+      resultOffset.x = currentItemClientBoundingRect.width;
+    }
+
+    if (resultOffset.y + currentItemClientBoundingRect.height < 0) {
+      resultOffset.y = 0;
+    } else if (resultOffset.y > currentItemClientBoundingRect.height) {
+      resultOffset.y = currentItemClientBoundingRect.height;
+    }
+
+    if (resultSize.width < 0) {
+      resultSize.width = 0;
+    } else if (resultSize.width > containerBoundingClientRect.width) {
+      resultSize.width = containerBoundingClientRect.width;
+    }
+
+    if (resultSize.height < 0) {
+      resultSize.height = 0;
+    } else if (resultSize.height > containerBoundingClientRect.height) {
+      resultSize.height = containerBoundingClientRect.height;
+    }
 
     const updatedCoordinates = new CoordinatesModel(
-      currentItemClientBoundingRect.left - containerBoundingClientRect.left  + possibleOffset.x,
-      currentItemClientBoundingRect.top - containerBoundingClientRect.top + possibleOffset.y
+      currentItemClientBoundingRect.left - containerBoundingClientRect.left  + resultOffset.x,
+      currentItemClientBoundingRect.top - containerBoundingClientRect.top + resultOffset.y
     );
 
     dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
-    dashboardLayoutItem.setSize(possibleSize)
+    dashboardLayoutItem.setSize(resultSize);
 
     dashboardLayoutItem.setScale(new ScaleModel(0, 0));
     dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
@@ -178,71 +210,136 @@ export class DashboardLayoutService {
     containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel,
-    resizeDirection
+    resizeDirection,
+    minSize: SizeModel = new SizeModel(0, 0)
   ): OffsetModel {
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
-    const possibleOffset = new OffsetModel(0, 0);
+
+    let minWidth = minSize.width;
+    let minHeight = minSize.height;
+
+    if (minSize.sizeType === DimensionType.persentile) {
+      minWidth = containerBoundingClientRect.width * minSize.width / 100;
+      minHeight = containerBoundingClientRect.height * minSize.height / 100;
+    }
+
+    const possibleOffset = new OffsetModel(offset.x, offset.y);
 
     switch (resizeDirection) {
-      case 'nw':
-        possibleOffset.x = offset.x;
-        possibleOffset.y = offset.y;
-        break;
       case 'w':
+      case 'nw':
       case 'sw':
-        possibleOffset.x = offset.x;
+        if ((currentItemClientBoundingRect.left - containerBoundingClientRect.left) + possibleOffset.x < 0) {
+          possibleOffset.x = -(currentItemClientBoundingRect.left - containerBoundingClientRect.left);
+        } else if (possibleOffset.x > currentItemClientBoundingRect.width - minWidth) {
+          possibleOffset.x = currentItemClientBoundingRect.width - minWidth;
+        }
         break;
+      case 'e':
+      case 'ne':
+      case 'se':
+        if (currentItemClientBoundingRect.width - minWidth + possibleOffset.x < 0) {
+          possibleOffset.x = -(currentItemClientBoundingRect.width + minWidth);
+        } else if (possibleOffset.x > containerBoundingClientRect.right - currentItemClientBoundingRect.right) {
+          possibleOffset.x = containerBoundingClientRect.right - currentItemClientBoundingRect.right;
+        }
+        break;
+    }
+
+    switch (resizeDirection) {
       case 'n':
       case 'ne':
-        possibleOffset.y = offset.y;
+      case 'nw':
+        if ((currentItemClientBoundingRect.top - containerBoundingClientRect.top) + possibleOffset.y < 0) {
+          possibleOffset.y = -(currentItemClientBoundingRect.top - containerBoundingClientRect.top);
+        } else if (possibleOffset.y > currentItemClientBoundingRect.height - minHeight) {
+          possibleOffset.y = currentItemClientBoundingRect.height - minHeight;
+        }
+        break;
+      case 's':
+      case 'se':
+      case 'sw':
+        if (currentItemClientBoundingRect.height - minHeight + possibleOffset.y < 0) {
+          possibleOffset.y = -(currentItemClientBoundingRect.height + minHeight);
+        } else if (possibleOffset.y > containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom) {
+          possibleOffset.y = containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom;
+        }
         break;
     }
 
     return possibleOffset;
   }
 
-  private getPossibleResizeSize(
+  private getResizeOffset(
+    containerElement: HTMLElement,
+    dashboardLayoutItem: DashboardLayoutItem,
+    offset: OffsetModel,
+    resizeDirection
+  ): OffsetModel {
+    const resultOffset = new OffsetModel(0, 0);
+
+    switch (resizeDirection) {
+      case 'nw':
+        resultOffset.x = offset.x;
+        resultOffset.y = offset.y;
+        break;
+      case 'w':
+      case 'sw':
+        resultOffset.x = offset.x;
+        break;
+      case 'n':
+      case 'ne':
+        resultOffset.y = offset.y;
+        break;
+    }
+
+    return resultOffset;
+  }
+
+  private getResizeSize(
     containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel,
     resizeDirection
   ): SizeModel {
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
-    const possibleSize = new SizeModel(currentItemClientBoundingRect.width, currentItemClientBoundingRect.height,
+    const resultSize = new SizeModel(currentItemClientBoundingRect.width, currentItemClientBoundingRect.height,
       DimensionType.pixels);
 
     switch (resizeDirection) {
       case 'w':
-        possibleSize.width -= offset.x;
+        resultSize.width -= offset.x;
         break;
       case 'nw':
-        possibleSize.width -= offset.x;
-        possibleSize.height -= offset.y;
+        resultSize.width -= offset.x;
+        resultSize.height -= offset.y;
         break;
       case 'n':
-        possibleSize.height -= offset.y;
+        resultSize.height -= offset.y;
         break;
       case 'ne':
-        possibleSize.width += offset.x;
-        possibleSize.height -= offset.y;
+        resultSize.width += offset.x;
+        resultSize.height -= offset.y;
         break;
       case 'e':
-        possibleSize.width += offset.x;
+        resultSize.width += offset.x;
         break;
       case 'se':
-        possibleSize.width += offset.x;
-        possibleSize.height += offset.y;
+        resultSize.width += offset.x;
+        resultSize.height += offset.y;
         break;
       case 's':
-        possibleSize.height += offset.y;
+        resultSize.height += offset.y;
         break;
       case 'sw':
-        possibleSize.width -= offset.x;
-        possibleSize.height += offset.y;
+        resultSize.width -= offset.x;
+        resultSize.height += offset.y;
         break;
     }
 
-    return possibleSize;
+    return resultSize;
   }
 
   private getPercentageCoordinates(containerElement: HTMLElement, coordinates: CoordinatesModel): CoordinatesModel {
