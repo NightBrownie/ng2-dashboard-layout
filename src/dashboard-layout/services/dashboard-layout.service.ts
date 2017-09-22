@@ -153,7 +153,7 @@ export class DashboardLayoutService {
     );
 
     dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
-    dashboardLayoutItem.setSize(resultSize);
+    dashboardLayoutItem.setSize(this.getPercentageSize(containerElement, resultSize));
 
     dashboardLayoutItem.setScale(new ScaleModel(0, 0));
     dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
@@ -349,6 +349,19 @@ export class DashboardLayoutService {
       Number((coordinates.x / containerBoundingClientRect.width * 100)
         .toFixed(DEFAULT_PRESCISION_CHARS)),
       Number((coordinates.y / containerBoundingClientRect.height * 100)
+        .toFixed(DEFAULT_PRESCISION_CHARS))
+    );
+  }
+
+  private getPercentageSize(
+    containerElement: HTMLElement,
+    size: SizeModel
+  ): SizeModel {
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
+    return new SizeModel(
+      Number((size.width / containerBoundingClientRect.width * 100)
+        .toFixed(DEFAULT_PRESCISION_CHARS)),
+      Number((size.height / containerBoundingClientRect.height * 100)
         .toFixed(DEFAULT_PRESCISION_CHARS))
     );
   }
