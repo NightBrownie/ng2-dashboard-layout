@@ -20,8 +20,7 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
   private dragHandleSubs: Subscription[] = [];
 
   @Input() private draggable: boolean;
-  @Input() private dragging: boolean;
-  @Output() private draggingChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() private dragging: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   @ContentChildren(DragHandleDirective) private dragHandles: QueryList<DragHandleDirective>;
 
@@ -66,7 +65,7 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
     this.dashboardLayoutService.startDrag(this);
-    this.draggingChange.next(true);
+    this.dragging.next(true);
   }
 
   private drag(dragCoordinates: CoordinatesModel) {
@@ -77,6 +76,6 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.dashboardLayoutService.endDrag(this, this.getOffset(this.startDragCoordinates, dragEndCoordinates));
     this.startDragCoordinates = null;
     this.cachedElementClientBoundingRect = null;
-    this.draggingChange.next(false);
+    this.dragging.next(false);
   }
 }

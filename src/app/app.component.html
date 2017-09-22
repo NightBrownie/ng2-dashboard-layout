@@ -3,8 +3,8 @@
     class="draggable-container"
     draggable
     resizable
-    [(dragging)]="firstContainerDragging"
-    [(resizing)]="firstContainerResizing"
+    (dragging)="firstContainerDragging = $event"
+    (resizing)="firstContainerResizing = $event"
     [ngClass]="{
       'draggable-container_dragging': firstContainerDragging,
       'draggable-container_resizing': firstContainerResizing
@@ -19,8 +19,8 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
-        [(dragging)]="firstContainerInnerDragging"
-        [(resizing)]="firstContainerInnerResizing"
+        (dragging)="firstContainerInnerDragging = $event"
+        (resizing)="firstContainerInnerResizing = $event"
         [ngClass]="{
           'draggable-container_dragging': firstContainerInnerDragging,
           'draggable-container_resizing': firstContainerInnerResizing
@@ -104,8 +104,8 @@
     class="draggable-container"
     draggable
     resizable
-    [(dragging)]="secondContainerDragging"
-    [(resizing)]="secondContainerResizing"
+    (dragging)="secondContainerDragging = $event"
+    (resizing)="secondContainerResizing = $event"
     [ngClass]="{
       'draggable-container_dragging': secondContainerDragging,
       'draggable-container_resizing': secondContainerResizing
@@ -120,8 +120,8 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
-        [(dragging)]="secondContainerInnerDragging"
-        [(resizing)]="secondContainerInnerResizing"
+        (dragging)="secondContainerInnerDragging = $event"
+        (resizing)="secondContainerInnerResizing = $event"
         [ngClass]="{
           'draggable-container_dragging': secondContainerInnerDragging,
           'draggable-container_resizing': secondContainerInnerResizing

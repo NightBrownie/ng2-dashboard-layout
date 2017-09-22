@@ -102,7 +102,7 @@ export class DashboardLayoutService {
       dashboardLayoutItem.setScale(new ScaleModel(resultSize.width / currentItemClientBoundingRect.width,
         resultSize.height / currentItemClientBoundingRect.height));
     } else {
-      dashboardLayoutItem.setSize(resultSize);
+      dashboardLayoutItem.setSize(this.getPercentageSize(containerElement, resultSize));
     }
 
     dashboardLayoutItem.setTranslate(resultOffset);

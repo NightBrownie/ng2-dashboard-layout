@@ -22,8 +22,7 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
   private resizerSubs: Subscription[] = [];
 
   @Input() private resizable: boolean;
-  @Input() private resizing: boolean;
-  @Output() private resizingChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() private resizing: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   @ContentChildren(ResizerDirective) private resizers: QueryList<ResizerDirective>;
 
@@ -69,7 +68,7 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
     this.dashboardLayoutService.startResize(this);
-    this.resizingChange.next(true);
+    this.resizing.next(true);
   }
 
   private resize(resizeCoordinates: CoordinatesModel) {
@@ -89,6 +88,6 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
 
     this.startResizeCoordinates = null;
     this.cachedElementClientBoundingRect = null;
-    this.resizingChange.next(false);
+    this.resizing.next(false);
   }
 }
