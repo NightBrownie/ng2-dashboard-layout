@@ -65,6 +65,7 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
     this.dashboardLayoutService.startDrag(this);
+    this.activate();
     this.dragging.next(true);
   }
 

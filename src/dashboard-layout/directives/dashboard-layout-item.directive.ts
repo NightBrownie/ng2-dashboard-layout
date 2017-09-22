@@ -1,10 +1,11 @@
-import {Directive, ElementRef, HostBinding, OnInit} from '@angular/core';
+import {Directive, ElementRef, EventEmitter, HostBinding, Input, OnInit, Output} from '@angular/core';
 import {DomSanitizer, SafeStyle} from '@angular/platform-browser';
 
 import {DashboardLayoutService} from '../services/dashboard-layout.service';
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
 import {CoordinatesModel, OffsetModel, ScaleModel, SizeModel} from '../models';
 import {DimensionType} from '../enums/dimension-type.enum';
+import {SnappingMode} from '../enums/snapping-mode.enum';
 
 
 @Directive({
@@ -13,6 +14,7 @@ import {DimensionType} from '../enums/dimension-type.enum';
 export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit {
   private transformScale: ScaleModel;
   private transformTranslate: OffsetModel;
+  private internalPriority: number;
 
   @HostBinding('style.transform')
   private transform: SafeStyle;
@@ -29,6 +31,20 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   @HostBinding('style.width')
   private width: string;
 
+  get priority() {
+    return this.internalPriority;
+  }
+
+  set priority(priority: number) {
+    this.internalPriority = priority;
+    this.priorityChanged.emit(priority);
+  }
+
+  @Input() snapToDashboardItemsMode: SnappingMode = SnappingMode.none;
+  @Input() snapRadius = 0;
+
+  @Output() priorityChanged: EventEmitter<number> = new EventEmitter();
+
   constructor(
     protected element: ElementRef,
     protected dashboardLayoutService: DashboardLayoutService,
@@ -37,7 +53,7 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
   }
 
   ngOnInit() {
-    this.dashboardLayoutService.registerDashboardLayoutItem(this, this.element.nativeElement.parentElement);
+    this.dashboardLayoutService.registerDashboardLayoutItem(this, this.element.nativeElement);
   }
 
   getElementClientBoundingRect(): ClientRect {
@@ -85,6 +101,10 @@ export class DashboardLayoutItemDirective implements DashboardLayoutItem, OnInit
       : '';
 
     this.transform = this.sanitizer.bypassSecurityTrustStyle(transform);
+  }
+
+  activate() {
+    this.dashboardLayoutService.activateItem(this);
   }
 
   protected getOffset(dragStartMouseCoordinates: CoordinatesModel, coordinates: CoordinatesModel) {

@@ -4,21 +4,28 @@ import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface
 import {OffsetModel, CoordinatesModel, ScaleModel, SizeModel} from '../models';
 import {DimensionType} from '../enums/dimension-type.enum';
 import {DEFAULT_PRESCISION_CHARS} from '../constants/default-config';
+import {RectangleModel} from '../models/rectangle.model';
+import {SnappingMode} from '../enums/snapping-mode.enum';
 
 
 @Injectable()
 export class DashboardLayoutService {
+  // dashboard layout items register
   private containerElementDashboardLayoutItemsMap: Map<HTMLElement, DashboardLayoutItem[]>
     = new Map<HTMLElement, DashboardLayoutItem[]>();
+  private dashboardLayoutItemElementMap: Map<DashboardLayoutItem, HTMLElement>
+    = new Map<DashboardLayoutItem, HTMLElement>();
+  private dashboardLayoutItemContainerElementMap: Map<DashboardLayoutItem, HTMLElement>
+    = new Map<DashboardLayoutItem, HTMLElement>();
+
   private containerClientBoundingRectMap: Map<HTMLElement, ClientRect>
     = new Map<HTMLElement, ClientRect>();
-  private dashboardLayoutItemContainerMap: Map<DashboardLayoutItem, HTMLElement>
-    = new Map<DashboardLayoutItem, HTMLElement>();
 
   constructor() {
   }
 
-  public registerDashboardLayoutItem(dashboardLayoutItem: DashboardLayoutItem, containerElement: HTMLElement) {
+  public registerDashboardLayoutItem(dashboardLayoutItem: DashboardLayoutItem, element: HTMLElement) {
+    const containerElement = element.parentElement;
     const dashboardLayoutItems = this.containerElementDashboardLayoutItemsMap.get(containerElement);
 
     if (!dashboardLayoutItems) {
@@ -27,14 +34,16 @@ export class DashboardLayoutService {
       dashboardLayoutItems.push(dashboardLayoutItem);
     }
 
-    this.dashboardLayoutItemContainerMap.set(dashboardLayoutItem, containerElement);
+    this.dashboardLayoutItemElementMap.set(dashboardLayoutItem, element);
+    this.dashboardLayoutItemContainerElementMap.set(dashboardLayoutItem, containerElement);
   }
 
   public unregisterDashboardLayoutItem(dashboardLayoutItem: DashboardLayoutItem) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
-      this.dashboardLayoutItemContainerMap.delete(dashboardLayoutItem);
+      this.dashboardLayoutItemElementMap.delete(dashboardLayoutItem);
+      this.dashboardLayoutItemContainerElementMap.delete(dashboardLayoutItem);
 
       let dashboardLayoutItems = this.containerElementDashboardLayoutItemsMap.get(containerElement);
       dashboardLayoutItems = dashboardLayoutItems.filter(layoutItem => layoutItem !== dashboardLayoutItem);
@@ -47,12 +56,16 @@ export class DashboardLayoutService {
     }
   }
 
+  public activateItem(dashboardLayoutItem: DashboardLayoutItem) {
+    // TODO: activate item and recalculate priority for all the other items, except current one
+  }
+
   public startDrag(dashboardLayoutItem: DashboardLayoutItem) {
     this.startDashboardOperation(dashboardLayoutItem);
   }
 
   public drag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
       dashboardLayoutItem.setTranslate(this.getPossibleDragOffset(containerElement, dashboardLayoutItem, offset));
@@ -61,7 +74,7 @@ export class DashboardLayoutService {
   }
 
   public endDrag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
       const possibleOffset = this.getPossibleDragOffset(containerElement, dashboardLayoutItem, offset);
@@ -91,7 +104,7 @@ export class DashboardLayoutService {
     minSize: SizeModel = new SizeModel(0, 0),
     scalePreferred: boolean = false
   ) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
     const possibleOffset = this.getPossibleResizeOffset(containerElement, dashboardLayoutItem, offset, resizeDirection);
@@ -115,7 +128,7 @@ export class DashboardLayoutService {
     resizeDirection,
     minSize: SizeModel = new SizeModel(0, 0)
   ) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
@@ -161,7 +174,7 @@ export class DashboardLayoutService {
   }
 
   private startDashboardOperation(dashboardLayoutItem: DashboardLayoutItem) {
-    const containerElement = this.dashboardLayoutItemContainerMap.get(dashboardLayoutItem);
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
       this.containerClientBoundingRectMap.set(containerElement, containerElement.getBoundingClientRect());
@@ -179,6 +192,171 @@ export class DashboardLayoutService {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
 
+    // try to snap item to other items
+    // noinspection TsLint
+    const dashboardLayoutItemInnerSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
+      ? dashboardLayoutItem.snapRadius : 0;
+    // noinspection TsLint
+    const dashboardLayoutItemOuterSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer)
+      ? dashboardLayoutItem.snapRadius : 0;
+
+    // horizontal snapping rectangles
+    const layoutItemLeftSnapRectangle = new RectangleModel(
+      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
+        layoutItemBoundingClientRect.top),
+      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
+        layoutItemBoundingClientRect.bottom));
+    const layoutItemRightSnapRectangle = new RectangleModel(
+      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
+        layoutItemBoundingClientRect.top),
+      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
+        layoutItemBoundingClientRect.bottom));
+
+    // vertical snapping rectangles
+    const layoutItemTopSnapRectangle = new RectangleModel(
+      new CoordinatesModel(layoutItemBoundingClientRect.left,
+        layoutItemBoundingClientRect.top + dashboardLayoutItemOuterSnapRadius),
+      new CoordinatesModel(layoutItemBoundingClientRect.right,
+        layoutItemBoundingClientRect.bottom + dashboardLayoutItemInnerSnapRadius));
+    const layoutItemBottomSnapRectangle = new RectangleModel(
+      new CoordinatesModel(layoutItemBoundingClientRect.left,
+        layoutItemBoundingClientRect.top + dashboardLayoutItemInnerSnapRadius),
+      new CoordinatesModel(layoutItemBoundingClientRect.right,
+        layoutItemBoundingClientRect.bottom + dashboardLayoutItemOuterSnapRadius));
+
+    let snapOffset: OffsetModel = new OffsetModel(0, 0);
+    let snapOffsetLength = Infinity;
+    this.getSiblings(dashboardLayoutItem)
+      .forEach(item => {
+        const itemBoundingClientRect = item.getElementClientBoundingRect();
+
+        // noinspection TsLint
+        const itemInnerSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.inner)
+          ? item.snapRadius : 0;
+        // noinspection TsLint
+        const itemOuterSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.outer)
+          ? item.snapRadius : 0;
+
+        // horizontal snapping rectangles
+        const itemLeftSnapRectangle = new RectangleModel(
+          new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.top),
+          new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.bottom));
+        const itemRightSnapRectangle = new RectangleModel(
+          new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.top),
+          new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.bottom));
+
+        // vertical snapping rectangles
+        const itemTopSnapRectangle = new RectangleModel(
+          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemOuterSnapRadius),
+          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemInnerSnapRadius));
+        const itemBottomSnapRectangle = new RectangleModel(
+          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemInnerSnapRadius),
+          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemOuterSnapRadius));
+
+        // top-bottom outer
+        if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemBottomSnapRectangle)) {
+          const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.top;
+          const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+
+          if (currentSnapOffsetLength < snapOffsetLength) {
+            snapOffsetLength = currentSnapOffsetLength;
+            snapOffset = currentSnapOffset;
+          }
+        }
+
+        // bottom-top outer
+        if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemTopSnapRectangle)) {
+          const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.bottom;
+          const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+
+          if (currentSnapOffsetLength < snapOffsetLength) {
+            snapOffsetLength = currentSnapOffsetLength;
+            snapOffset = currentSnapOffset;
+          }
+        }
+
+        // left-right outer
+        if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemRightSnapRectangle)) {
+          const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.left;
+          const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+
+          if (currentSnapOffsetLength < snapOffsetLength) {
+            snapOffsetLength = currentSnapOffsetLength;
+            snapOffset = currentSnapOffset;
+          }
+        }
+
+        // right-left outer
+        if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemLeftSnapRectangle)) {
+          const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.right;
+          const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+
+          if (currentSnapOffsetLength < snapOffsetLength) {
+            snapOffsetLength = currentSnapOffsetLength;
+            snapOffset = currentSnapOffset;
+          }
+        }
+
+        // inner vertical snapping test
+        // noinspection TsLint
+        if (!!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
+          || !!(item.snapToDashboardItemsMode & SnappingMode.inner)
+        ) {
+          // top-top inner
+          if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemTopSnapRectangle)) {
+            const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.top;
+            const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+
+            if (currentSnapOffsetLength < snapOffsetLength) {
+              snapOffsetLength = currentSnapOffsetLength;
+              snapOffset = currentSnapOffset;
+            }
+          }
+
+          // bottom-bottom inner
+          if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemBottomSnapRectangle)) {
+            const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
+            const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+
+            if (currentSnapOffsetLength < snapOffsetLength) {
+              snapOffsetLength = currentSnapOffsetLength;
+              snapOffset = currentSnapOffset;
+            }
+          }
+
+          // left-left inner
+          if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemLeftSnapRectangle)) {
+            const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.left;
+            const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+
+            if (currentSnapOffsetLength < snapOffsetLength) {
+              snapOffsetLength = currentSnapOffsetLength;
+              snapOffset = currentSnapOffset;
+            }
+          }
+
+          // right-right inner
+          if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemRightSnapRectangle)) {
+            const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.right;
+            const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+
+            if (currentSnapOffsetLength < snapOffsetLength) {
+              snapOffsetLength = currentSnapOffsetLength;
+              snapOffset = currentSnapOffset;
+            }
+          }
+        }
+      });
+
+    if (snapOffsetLength < Infinity) {
+      console.log(snapOffset);
+      console.log(snapOffsetLength);
+    }
+
+    offset.x += snapOffset.x;
+    offset.y += snapOffset.y;
+
+    // check dashboard bounds for x axis
     if (layoutItemBoundingClientRect.left + offset.x >= containerBoundingClientRect.left
       && layoutItemBoundingClientRect.right + offset.x <= containerBoundingClientRect.right
     ) {
@@ -191,6 +369,7 @@ export class DashboardLayoutService {
       possibleXOffset = containerBoundingClientRect.left - layoutItemBoundingClientRect.left;
     }
 
+    // check dashboard bounds for y axis
     if (layoutItemBoundingClientRect.top + offset.y >= containerBoundingClientRect.top
       && layoutItemBoundingClientRect.bottom + offset.y <= containerBoundingClientRect.bottom
     ) {
@@ -374,5 +553,31 @@ export class DashboardLayoutService {
     }
 
     return containerBoundingClientRect;
+  }
+
+  private checkRectanglesIntersect(firstRectangle: RectangleModel, secondRectangle: RectangleModel): boolean {
+    return !(firstRectangle.left > secondRectangle.right
+      || firstRectangle.right < secondRectangle.left
+      || firstRectangle.top > secondRectangle.bottom
+      || firstRectangle.bottom < secondRectangle.top);
+  }
+
+  private getSiblings(dashboardLayoutItem) {
+    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+
+    const result = [];
+    (this.containerElementDashboardLayoutItemsMap.get(containerElement) || [])
+      .forEach(item => {
+        if (item !== dashboardLayoutItem
+          && this.dashboardLayoutItemElementMap.get(item)
+            !== this.dashboardLayoutItemElementMap.get(dashboardLayoutItem)
+          && result.every(resultItem => this.dashboardLayoutItemElementMap.get(resultItem)
+              !== this.dashboardLayoutItemElementMap.get(item))
+        ) {
+          result.push(item);
+        }
+      });
+
+    return result;
   }
 }

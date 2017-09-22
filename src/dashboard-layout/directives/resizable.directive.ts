@@ -68,6 +68,7 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
     this.dashboardLayoutService.startResize(this);
+    this.activate();
     this.resizing.next(true);
   }
 

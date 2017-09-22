@@ -5,6 +5,8 @@
     resizable
     (dragging)="firstContainerDragging = $event"
     (resizing)="firstContainerResizing = $event"
+    [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+    [snapRadius]="15"
     [ngClass]="{
       'draggable-container_dragging': firstContainerDragging,
       'draggable-container_resizing': firstContainerResizing
@@ -21,6 +23,8 @@
         resizable
         (dragging)="firstContainerInnerDragging = $event"
         (resizing)="firstContainerInnerResizing = $event"
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
         [ngClass]="{
           'draggable-container_dragging': firstContainerInnerDragging,
           'draggable-container_resizing': firstContainerInnerResizing
@@ -106,6 +110,8 @@
     resizable
     (dragging)="secondContainerDragging = $event"
     (resizing)="secondContainerResizing = $event"
+    [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+    [snapRadius]="15"
     [ngClass]="{
       'draggable-container_dragging': secondContainerDragging,
       'draggable-container_resizing': secondContainerResizing
@@ -120,6 +126,8 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
         (dragging)="secondContainerInnerDragging = $event"
         (resizing)="secondContainerInnerResizing = $event"
         [ngClass]="{
