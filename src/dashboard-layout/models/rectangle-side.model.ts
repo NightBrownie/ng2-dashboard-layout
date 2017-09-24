@@ -2,13 +2,13 @@ import { CoordinatesModel } from './';
 import { SnappingMode, RectangleSideType } from '../enums';
 
 
-export class RectangleSide {
+export class RectangleSideModel {
   constructor(
-    public topCoordinates: CoordinatesModel = new CoordinatesModel(0, 0),
-    public bottomCoordinates: CoordinatesModel = new CoordinatesModel(0, 0),
-    public sideType: RectangleSideType = RectangleSideType.Left,
-    public snappingMode: SnappingMode = SnappingMode.none,
-    public snappingSize: number = 0
+    public beginningCoordinates: CoordinatesModel,
+    public endingCoordinates: CoordinatesModel,
+    public sideType: RectangleSideType,
+    public snapMode: SnappingMode,
+    public snapRadius: number
   ) {
   }
 }
