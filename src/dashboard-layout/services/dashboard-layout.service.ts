@@ -194,167 +194,167 @@ export class DashboardLayoutService {
 
     // try to snap item to other items
     // noinspection TsLint
-    const dashboardLayoutItemInnerSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
-      ? dashboardLayoutItem.snapRadius : 0;
-    // noinspection TsLint
-    const dashboardLayoutItemOuterSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer)
-      ? dashboardLayoutItem.snapRadius : 0;
-
-    // horizontal snapping rectangles
-    const layoutItemLeftSnapRectangle = new RectangleModel(
-      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
-        layoutItemBoundingClientRect.top),
-      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
-        layoutItemBoundingClientRect.bottom));
-    const layoutItemRightSnapRectangle = new RectangleModel(
-      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
-        layoutItemBoundingClientRect.top),
-      new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
-        layoutItemBoundingClientRect.bottom));
-
-    // vertical snapping rectangles
-    const layoutItemTopSnapRectangle = new RectangleModel(
-      new CoordinatesModel(layoutItemBoundingClientRect.left,
-        layoutItemBoundingClientRect.top + dashboardLayoutItemOuterSnapRadius),
-      new CoordinatesModel(layoutItemBoundingClientRect.right,
-        layoutItemBoundingClientRect.bottom + dashboardLayoutItemInnerSnapRadius));
-    const layoutItemBottomSnapRectangle = new RectangleModel(
-      new CoordinatesModel(layoutItemBoundingClientRect.left,
-        layoutItemBoundingClientRect.top + dashboardLayoutItemInnerSnapRadius),
-      new CoordinatesModel(layoutItemBoundingClientRect.right,
-        layoutItemBoundingClientRect.bottom + dashboardLayoutItemOuterSnapRadius));
-
-    let snapOffset: OffsetModel = new OffsetModel(0, 0);
-    let snapOffsetLength = Infinity;
-    this.getSiblings(dashboardLayoutItem)
-      .forEach(item => {
-        const itemBoundingClientRect = item.getElementClientBoundingRect();
-
-        // noinspection TsLint
-        const itemInnerSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.inner)
-          ? item.snapRadius : 0;
-        // noinspection TsLint
-        const itemOuterSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.outer)
-          ? item.snapRadius : 0;
-
-        // horizontal snapping rectangles
-        const itemLeftSnapRectangle = new RectangleModel(
-          new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.top),
-          new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.bottom));
-        const itemRightSnapRectangle = new RectangleModel(
-          new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.top),
-          new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.bottom));
-
-        // vertical snapping rectangles
-        const itemTopSnapRectangle = new RectangleModel(
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemOuterSnapRadius),
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemInnerSnapRadius));
-        const itemBottomSnapRectangle = new RectangleModel(
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemInnerSnapRadius),
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemOuterSnapRadius));
-
-        // top-bottom outer
-        if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemBottomSnapRectangle)) {
-          const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.top;
-          const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
-
-          if (currentSnapOffsetLength < snapOffsetLength) {
-            snapOffsetLength = currentSnapOffsetLength;
-            snapOffset = currentSnapOffset;
-          }
-        }
-
-        // bottom-top outer
-        if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemTopSnapRectangle)) {
-          const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.bottom;
-          const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
-
-          if (currentSnapOffsetLength < snapOffsetLength) {
-            snapOffsetLength = currentSnapOffsetLength;
-            snapOffset = currentSnapOffset;
-          }
-        }
-
-        // left-right outer
-        if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemRightSnapRectangle)) {
-          const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.left;
-          const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
-
-          if (currentSnapOffsetLength < snapOffsetLength) {
-            snapOffsetLength = currentSnapOffsetLength;
-            snapOffset = currentSnapOffset;
-          }
-        }
-
-        // right-left outer
-        if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemLeftSnapRectangle)) {
-          const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.right;
-          const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
-
-          if (currentSnapOffsetLength < snapOffsetLength) {
-            snapOffsetLength = currentSnapOffsetLength;
-            snapOffset = currentSnapOffset;
-          }
-        }
-
-        // inner vertical snapping test
-        // noinspection TsLint
-        if (!!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
-          || !!(item.snapToDashboardItemsMode & SnappingMode.inner)
-        ) {
-          // top-top inner
-          if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemTopSnapRectangle)) {
-            const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.top;
-            const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
-
-            if (currentSnapOffsetLength < snapOffsetLength) {
-              snapOffsetLength = currentSnapOffsetLength;
-              snapOffset = currentSnapOffset;
-            }
-          }
-
-          // bottom-bottom inner
-          if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemBottomSnapRectangle)) {
-            const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
-            const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
-
-            if (currentSnapOffsetLength < snapOffsetLength) {
-              snapOffsetLength = currentSnapOffsetLength;
-              snapOffset = currentSnapOffset;
-            }
-          }
-
-          // left-left inner
-          if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemLeftSnapRectangle)) {
-            const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.left;
-            const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
-
-            if (currentSnapOffsetLength < snapOffsetLength) {
-              snapOffsetLength = currentSnapOffsetLength;
-              snapOffset = currentSnapOffset;
-            }
-          }
-
-          // right-right inner
-          if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemRightSnapRectangle)) {
-            const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.right;
-            const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
-
-            if (currentSnapOffsetLength < snapOffsetLength) {
-              snapOffsetLength = currentSnapOffsetLength;
-              snapOffset = currentSnapOffset;
-            }
-          }
-        }
-      });
-
-    if (snapOffsetLength < Infinity) {
-      console.log(snapOffset);
-      console.log(snapOffsetLength);
-    }
-
-    offset.x += snapOffset.x;
-    offset.y += snapOffset.y;
+    // const dashboardLayoutItemInnerSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
+    //   ? dashboardLayoutItem.snapRadius : 0;
+    // // noinspection TsLint
+    // const dashboardLayoutItemOuterSnapRadius = !!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer)
+    //   ? dashboardLayoutItem.snapRadius : 0;
+    //
+    // // horizontal snapping rectangles
+    // const layoutItemLeftSnapRectangle = new RectangleModel(
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
+    //     layoutItemBoundingClientRect.top),
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
+    //     layoutItemBoundingClientRect.bottom));
+    // const layoutItemRightSnapRectangle = new RectangleModel(
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemInnerSnapRadius,
+    //     layoutItemBoundingClientRect.top),
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left + dashboardLayoutItemOuterSnapRadius,
+    //     layoutItemBoundingClientRect.bottom));
+    //
+    // // vertical snapping rectangles
+    // const layoutItemTopSnapRectangle = new RectangleModel(
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left,
+    //     layoutItemBoundingClientRect.top + dashboardLayoutItemOuterSnapRadius),
+    //   new CoordinatesModel(layoutItemBoundingClientRect.right,
+    //     layoutItemBoundingClientRect.bottom + dashboardLayoutItemInnerSnapRadius));
+    // const layoutItemBottomSnapRectangle = new RectangleModel(
+    //   new CoordinatesModel(layoutItemBoundingClientRect.left,
+    //     layoutItemBoundingClientRect.top + dashboardLayoutItemInnerSnapRadius),
+    //   new CoordinatesModel(layoutItemBoundingClientRect.right,
+    //     layoutItemBoundingClientRect.bottom + dashboardLayoutItemOuterSnapRadius));
+    //
+    // let snapOffset: OffsetModel = new OffsetModel(0, 0);
+    // let snapOffsetLength = Infinity;
+    // this.getSiblings(dashboardLayoutItem)
+    //   .forEach(item => {
+    //     const itemBoundingClientRect = item.getElementClientBoundingRect();
+    //
+    //     // noinspection TsLint
+    //     const itemInnerSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.inner)
+    //       ? item.snapRadius : 0;
+    //     // noinspection TsLint
+    //     const itemOuterSnapRadius = !!(item.snapToDashboardItemsMode & SnappingMode.outer)
+    //       ? item.snapRadius : 0;
+    //
+    //     // horizontal snapping rectangles
+    //     const itemLeftSnapRectangle = new RectangleModel(
+    //       new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.top),
+    //       new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.bottom));
+    //     const itemRightSnapRectangle = new RectangleModel(
+    //       new CoordinatesModel(itemBoundingClientRect.left + itemInnerSnapRadius, itemBoundingClientRect.top),
+    //       new CoordinatesModel(itemBoundingClientRect.left + itemOuterSnapRadius, itemBoundingClientRect.bottom));
+    //
+    //     // vertical snapping rectangles
+    //     const itemTopSnapRectangle = new RectangleModel(
+    //       new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemOuterSnapRadius),
+    //       new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemInnerSnapRadius));
+    //     const itemBottomSnapRectangle = new RectangleModel(
+    //       new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top + itemInnerSnapRadius),
+    //       new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom + itemOuterSnapRadius));
+    //
+    //     // top-bottom outer
+    //     if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemBottomSnapRectangle)) {
+    //       const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.top;
+    //       const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+    //
+    //       if (currentSnapOffsetLength < snapOffsetLength) {
+    //         snapOffsetLength = currentSnapOffsetLength;
+    //         snapOffset = currentSnapOffset;
+    //       }
+    //     }
+    //
+    //     // bottom-top outer
+    //     if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemTopSnapRectangle)) {
+    //       const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.bottom;
+    //       const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+    //
+    //       if (currentSnapOffsetLength < snapOffsetLength) {
+    //         snapOffsetLength = currentSnapOffsetLength;
+    //         snapOffset = currentSnapOffset;
+    //       }
+    //     }
+    //
+    //     // left-right outer
+    //     if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemRightSnapRectangle)) {
+    //       const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.left;
+    //       const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+    //
+    //       if (currentSnapOffsetLength < snapOffsetLength) {
+    //         snapOffsetLength = currentSnapOffsetLength;
+    //         snapOffset = currentSnapOffset;
+    //       }
+    //     }
+    //
+    //     // right-left outer
+    //     if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemLeftSnapRectangle)) {
+    //       const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.right;
+    //       const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+    //
+    //       if (currentSnapOffsetLength < snapOffsetLength) {
+    //         snapOffsetLength = currentSnapOffsetLength;
+    //         snapOffset = currentSnapOffset;
+    //       }
+    //     }
+    //
+    //     // inner vertical snapping test
+    //     // noinspection TsLint
+    //     if (!!(dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner)
+    //       || !!(item.snapToDashboardItemsMode & SnappingMode.inner)
+    //     ) {
+    //       // top-top inner
+    //       if (this.checkRectanglesIntersect(layoutItemTopSnapRectangle, itemTopSnapRectangle)) {
+    //         const currentSnapOffsetLength = itemBoundingClientRect.top - layoutItemBoundingClientRect.top;
+    //         const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+    //
+    //         if (currentSnapOffsetLength < snapOffsetLength) {
+    //           snapOffsetLength = currentSnapOffsetLength;
+    //           snapOffset = currentSnapOffset;
+    //         }
+    //       }
+    //
+    //       // bottom-bottom inner
+    //       if (this.checkRectanglesIntersect(layoutItemBottomSnapRectangle, itemBottomSnapRectangle)) {
+    //         const currentSnapOffsetLength = itemBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
+    //         const currentSnapOffset = new OffsetModel(0, currentSnapOffsetLength);
+    //
+    //         if (currentSnapOffsetLength < snapOffsetLength) {
+    //           snapOffsetLength = currentSnapOffsetLength;
+    //           snapOffset = currentSnapOffset;
+    //         }
+    //       }
+    //
+    //       // left-left inner
+    //       if (this.checkRectanglesIntersect(layoutItemLeftSnapRectangle, itemLeftSnapRectangle)) {
+    //         const currentSnapOffsetLength = itemBoundingClientRect.left - layoutItemBoundingClientRect.left;
+    //         const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+    //
+    //         if (currentSnapOffsetLength < snapOffsetLength) {
+    //           snapOffsetLength = currentSnapOffsetLength;
+    //           snapOffset = currentSnapOffset;
+    //         }
+    //       }
+    //
+    //       // right-right inner
+    //       if (this.checkRectanglesIntersect(layoutItemRightSnapRectangle, itemRightSnapRectangle)) {
+    //         const currentSnapOffsetLength = itemBoundingClientRect.right - layoutItemBoundingClientRect.right;
+    //         const currentSnapOffset = new OffsetModel(currentSnapOffsetLength, 0);
+    //
+    //         if (currentSnapOffsetLength < snapOffsetLength) {
+    //           snapOffsetLength = currentSnapOffsetLength;
+    //           snapOffset = currentSnapOffset;
+    //         }
+    //       }
+    //     }
+    //   });
+    //
+    // if (snapOffsetLength < Infinity) {
+    //   console.log(snapOffset);
+    //   console.log(snapOffsetLength);
+    // }
+    //
+    // offset.x += snapOffset.x;
+    // offset.y += snapOffset.y;
 
     // check dashboard bounds for x axis
     if (layoutItemBoundingClientRect.left + offset.x >= containerBoundingClientRect.left
