@@ -70,7 +70,7 @@ export class DashboardLayoutService {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
-      dashboardLayoutItem.setTranslate(this.getPossibleDragOffset(containerElement, dashboardLayoutItem, offset));
+      dashboardLayoutItem.setTranslate(this.getDragOffset(containerElement, dashboardLayoutItem, offset));
       dashboardLayoutItem.updateTransform();
     }
   }
@@ -79,7 +79,7 @@ export class DashboardLayoutService {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     if (containerElement) {
-      const possibleOffset = this.getPossibleDragOffset(containerElement, dashboardLayoutItem, offset);
+      const possibleOffset = this.getDragOffset(containerElement, dashboardLayoutItem, offset);
 
       const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
       const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
@@ -101,7 +101,7 @@ export class DashboardLayoutService {
 
   public resize(
     dashboardLayoutItem: DashboardLayoutItem,
-    offset: OffsetModel,
+    resizeOffset: OffsetModel,
     resizeDirection: string,
     minSize: SizeModel = new SizeModel(0, 0),
     scalePreferred: boolean = false
@@ -109,9 +109,115 @@ export class DashboardLayoutService {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
-    const possibleOffset = this.getPossibleResizeOffset(containerElement, dashboardLayoutItem, offset, resizeDirection);
-    const resultOffset = this.getResizeOffset(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
-    const resultSize = this.getResizeSize(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
+    // try to snap item to other items
+    const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem)
+      .filter((side: RectangleSideModel) => {
+        let sideShouldBeProcessed = false;
+
+        // noinspection TsLint
+        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer) {
+          switch (resizeDirection) {
+            case 'n':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom;
+              break;
+            case 'w':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.right;
+              break;
+            case 's':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top;
+              break;
+            case 'e':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.left;
+              break;
+            case 'nw':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'ne':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'sw':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'se':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.left;
+              break;
+          }
+        }
+
+        // noinspection TsLint
+        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner) {
+          switch (resizeDirection) {
+            case 'n':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top;
+              break;
+            case 'w':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 's':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom;
+              break;
+            case 'e':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'nw':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'ne':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'sw':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'se':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.right;
+              break;
+          }
+        }
+
+        return sideShouldBeProcessed;
+      });
+
+    const precalculatedResizeSize = this.getResizeSize(dashboardLayoutItem, resizeOffset, resizeDirection);
+    const precalculatedResizeOffset = this.getResizeOffset(resizeOffset, resizeDirection);
+
+    const snapOffset = this.getSnapOffset(
+      new CoordinatesModel(
+        currentItemClientBoundingRect.left + precalculatedResizeOffset.x,
+        currentItemClientBoundingRect.top + precalculatedResizeOffset.y
+      ),
+      new CoordinatesModel(
+        currentItemClientBoundingRect.left + precalculatedResizeSize.width + precalculatedResizeOffset.x,
+        currentItemClientBoundingRect.top + precalculatedResizeSize.height + precalculatedResizeOffset.y
+      ),
+      siblingVisibleRectangleSides,
+      dashboardLayoutItem.snapToDashboardItemsMode,
+      dashboardLayoutItem.snapRadius
+    );
+
+    const possibleOffset = this.boundResizeOffsetToDashboard(
+      containerElement,
+      dashboardLayoutItem,
+      new OffsetModel(resizeOffset.x + snapOffset.x, resizeOffset.y + snapOffset.y),
+      resizeDirection
+    );
+
+    const resultSize = this.getResizeSize(dashboardLayoutItem, possibleOffset, resizeDirection);
 
     if (scalePreferred) {
       dashboardLayoutItem.setScale(new ScaleModel(resultSize.width / currentItemClientBoundingRect.width,
@@ -120,13 +226,13 @@ export class DashboardLayoutService {
       dashboardLayoutItem.setSize(this.getPercentageSize(containerElement, resultSize));
     }
 
-    dashboardLayoutItem.setTranslate(resultOffset);
+    dashboardLayoutItem.setTranslate(this.getResizeOffset(possibleOffset, resizeDirection));
     dashboardLayoutItem.updateTransform();
   }
 
   public endResize(
     dashboardLayoutItem: DashboardLayoutItem,
-    offset: OffsetModel,
+    resizeOffset: OffsetModel,
     resizeDirection,
     minSize: SizeModel = new SizeModel(0, 0)
   ) {
@@ -134,33 +240,116 @@ export class DashboardLayoutService {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
-    const possibleOffset = this.getPossibleResizeOffset(containerElement, dashboardLayoutItem, offset, resizeDirection);
-    const resultOffset = this.getResizeOffset(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
-    const resultSize = this.getResizeSize(containerElement, dashboardLayoutItem, possibleOffset, resizeDirection);
+    // try to snap item to other items
+    const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem)
+      .filter((side: RectangleSideModel) => {
+        let sideShouldBeProcessed = false;
 
-    if (resultOffset.x + currentItemClientBoundingRect.width < 0) {
-      resultOffset.x = 0;
-    } else if (resultOffset.x > currentItemClientBoundingRect.width) {
-      resultOffset.x = currentItemClientBoundingRect.width;
-    }
+        // noinspection TsLint
+        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer) {
+          switch (resizeDirection) {
+            case 'n':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom;
+              break;
+            case 'w':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.right;
+              break;
+            case 's':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top;
+              break;
+            case 'e':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.left;
+              break;
+            case 'nw':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'ne':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'sw':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'se':
+              sideShouldBeProcessed = side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.left;
+              break;
+          }
+        }
 
-    if (resultOffset.y + currentItemClientBoundingRect.height < 0) {
-      resultOffset.y = 0;
-    } else if (resultOffset.y > currentItemClientBoundingRect.height) {
-      resultOffset.y = currentItemClientBoundingRect.height;
-    }
+        // noinspection TsLint
+        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner) {
+          switch (resizeDirection) {
+            case 'n':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top;
+              break;
+            case 'w':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 's':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom;
+              break;
+            case 'e':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'nw':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'ne':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.top
+                || side.sideType === RectangleSideType.right;
+              break;
+            case 'sw':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.left;
+              break;
+            case 'se':
+              sideShouldBeProcessed = sideShouldBeProcessed
+                || side.sideType === RectangleSideType.bottom
+                || side.sideType === RectangleSideType.right;
+              break;
+          }
+        }
 
-    if (resultSize.width < 0) {
-      resultSize.width = 0;
-    } else if (resultSize.width > containerBoundingClientRect.width) {
-      resultSize.width = containerBoundingClientRect.width;
-    }
+        return sideShouldBeProcessed;
+      });
 
-    if (resultSize.height < 0) {
-      resultSize.height = 0;
-    } else if (resultSize.height > containerBoundingClientRect.height) {
-      resultSize.height = containerBoundingClientRect.height;
-    }
+    const precalculatedResizeSize = this.getResizeSize(dashboardLayoutItem, resizeOffset, resizeDirection);
+    const precalculatedResizeOffset = this.getResizeOffset(resizeOffset, resizeDirection);
+
+    const snapOffset = this.getSnapOffset(
+      new CoordinatesModel(
+        currentItemClientBoundingRect.left + precalculatedResizeOffset.x,
+        currentItemClientBoundingRect.top + precalculatedResizeOffset.y
+      ),
+      new CoordinatesModel(
+        currentItemClientBoundingRect.left + precalculatedResizeSize.width + precalculatedResizeOffset.x,
+        currentItemClientBoundingRect.top + precalculatedResizeSize.height + precalculatedResizeOffset.y
+      ),
+      siblingVisibleRectangleSides,
+      dashboardLayoutItem.snapToDashboardItemsMode,
+      dashboardLayoutItem.snapRadius
+    );
+
+    const possibleOffset = this.boundResizeOffsetToDashboard(
+      containerElement,
+      dashboardLayoutItem,
+      new OffsetModel(resizeOffset.x + snapOffset.x, resizeOffset.y + snapOffset.y),
+      resizeDirection
+    );
+
+    const resultOffset = this.getResizeOffset(possibleOffset, resizeDirection);
+    const resultSize = this.getResizeSize(dashboardLayoutItem, possibleOffset, resizeDirection);
 
     const updatedCoordinates = new CoordinatesModel(
       currentItemClientBoundingRect.left - containerBoundingClientRect.left  + resultOffset.x,
@@ -183,7 +372,7 @@ export class DashboardLayoutService {
     }
   }
 
-  private getPossibleDragOffset(
+  private getDragOffset(
     containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel
@@ -193,9 +382,6 @@ export class DashboardLayoutService {
 
     // try to snap item to other items
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem);
-
-    // TODO: remove after filtering is applied
-    console.log(siblingVisibleRectangleSides.length);
 
     const snapOffset = this.getSnapOffset(
       new CoordinatesModel(
@@ -225,7 +411,7 @@ export class DashboardLayoutService {
     );
   }
 
-  private getPossibleResizeOffset(
+  private boundResizeOffsetToDashboard(
     containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel,
@@ -245,6 +431,7 @@ export class DashboardLayoutService {
 
     const possibleOffset = new OffsetModel(offset.x, offset.y);
 
+    // offset x coordinate
     switch (resizeDirection) {
       case 'w':
       case 'nw':
@@ -266,6 +453,7 @@ export class DashboardLayoutService {
         break;
     }
 
+    // offset y coordinate
     switch (resizeDirection) {
       case 'n':
       case 'ne':
@@ -290,26 +478,25 @@ export class DashboardLayoutService {
     return possibleOffset;
   }
 
+  // calculate offset to show dashboard item on resize
   private getResizeOffset(
-    containerElement: HTMLElement,
-    dashboardLayoutItem: DashboardLayoutItem,
-    offset: OffsetModel,
+    resizeOffset: OffsetModel,
     resizeDirection
   ): OffsetModel {
     const resultOffset = new OffsetModel(0, 0);
 
     switch (resizeDirection) {
       case 'nw':
-        resultOffset.x = offset.x;
-        resultOffset.y = offset.y;
+        resultOffset.x = resizeOffset.x;
+        resultOffset.y = resizeOffset.y;
         break;
       case 'w':
       case 'sw':
-        resultOffset.x = offset.x;
+        resultOffset.x = resizeOffset.x;
         break;
       case 'n':
       case 'ne':
-        resultOffset.y = offset.y;
+        resultOffset.y = resizeOffset.y;
         break;
     }
 
@@ -317,44 +504,45 @@ export class DashboardLayoutService {
   }
 
   private getResizeSize(
-    containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
-    offset: OffsetModel,
+    resizeOffset: OffsetModel,
     resizeDirection
   ): SizeModel {
-    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
-    const resultSize = new SizeModel(currentItemClientBoundingRect.width, currentItemClientBoundingRect.height,
-      DimensionType.pixels);
+    const resultSize = new SizeModel(
+      currentItemClientBoundingRect.width,
+      currentItemClientBoundingRect.height,
+      DimensionType.pixels
+    );
 
     switch (resizeDirection) {
       case 'w':
-        resultSize.width -= offset.x;
+        resultSize.width -= resizeOffset.x;
         break;
       case 'nw':
-        resultSize.width -= offset.x;
-        resultSize.height -= offset.y;
+        resultSize.width -= resizeOffset.x;
+        resultSize.height -= resizeOffset.y;
         break;
       case 'n':
-        resultSize.height -= offset.y;
+        resultSize.height -= resizeOffset.y;
         break;
       case 'ne':
-        resultSize.width += offset.x;
-        resultSize.height -= offset.y;
+        resultSize.width += resizeOffset.x;
+        resultSize.height -= resizeOffset.y;
         break;
       case 'e':
-        resultSize.width += offset.x;
+        resultSize.width += resizeOffset.x;
         break;
       case 'se':
-        resultSize.width += offset.x;
-        resultSize.height += offset.y;
+        resultSize.width += resizeOffset.x;
+        resultSize.height += resizeOffset.y;
         break;
       case 's':
-        resultSize.height += offset.y;
+        resultSize.height += resizeOffset.y;
         break;
       case 'sw':
-        resultSize.width -= offset.x;
-        resultSize.height += offset.y;
+        resultSize.width -= resizeOffset.x;
+        resultSize.height += resizeOffset.y;
         break;
     }
 
