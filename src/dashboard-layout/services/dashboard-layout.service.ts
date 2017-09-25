@@ -214,7 +214,8 @@ export class DashboardLayoutService {
       containerElement,
       dashboardLayoutItem,
       new OffsetModel(resizeOffset.x + snapOffset.x, resizeOffset.y + snapOffset.y),
-      resizeDirection
+      resizeDirection,
+      minSize
     );
 
     const resultSize = this.getResizeSize(dashboardLayoutItem, possibleOffset, resizeDirection);
@@ -345,7 +346,8 @@ export class DashboardLayoutService {
       containerElement,
       dashboardLayoutItem,
       new OffsetModel(resizeOffset.x + snapOffset.x, resizeOffset.y + snapOffset.y),
-      resizeDirection
+      resizeDirection,
+      minSize
     );
 
     const resultOffset = this.getResizeOffset(possibleOffset, resizeDirection);
