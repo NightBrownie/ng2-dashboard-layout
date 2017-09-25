@@ -23,6 +23,12 @@ export class AppComponent {
   public secondContainerResizing;
   public secondContainerInnerResizing;
 
+  public baseZIndex = 5;
+  public firstContainerPriority;
+  public firstContainerInnerPriority;
+  public secondContainerPriority;
+  public secondContainerInnerPriority;
+
   public bitwiseOr() {
     return Array.prototype.reduce.call(
       arguments,

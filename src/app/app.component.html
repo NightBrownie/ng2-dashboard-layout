@@ -7,6 +7,8 @@
     (resizing)="firstContainerResizing = $event"
     [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
     [snapRadius]="15"
+    (priorityChanged)="firstContainerPriority = $event"
+    [style.z-index]="baseZIndex + firstContainerPriority"
     [ngClass]="{
       'draggable-container_dragging': firstContainerDragging,
       'draggable-container_resizing': firstContainerResizing
@@ -25,6 +27,8 @@
         (resizing)="firstContainerInnerResizing = $event"
         [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
         [snapRadius]="15"
+        (priorityChanged)="firstContainerInnerPriority = $event"
+        [style.z-index]="baseZIndex + firstContainerInnerPriority"
         [ngClass]="{
           'draggable-container_dragging': firstContainerInnerDragging,
           'draggable-container_resizing': firstContainerInnerResizing
@@ -112,6 +116,8 @@
     (resizing)="secondContainerResizing = $event"
     [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
     [snapRadius]="15"
+    (priorityChanged)="secondContainerPriority = $event"
+    [style.z-index]="baseZIndex + secondContainerPriority"
     [ngClass]="{
       'draggable-container_dragging': secondContainerDragging,
       'draggable-container_resizing': secondContainerResizing
@@ -126,10 +132,12 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
-        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
-        [snapRadius]="15"
         (dragging)="secondContainerInnerDragging = $event"
         (resizing)="secondContainerInnerResizing = $event"
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
+        (priorityChanged)="secondContainerInnerPriority = $event"
+        [style.z-index]="baseZIndex + secondContainerInnerPriority"
         [ngClass]="{
           'draggable-container_dragging': secondContainerInnerDragging,
           'draggable-container_resizing': secondContainerInnerResizing

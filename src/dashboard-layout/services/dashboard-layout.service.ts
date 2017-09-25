@@ -59,7 +59,41 @@ export class DashboardLayoutService {
   }
 
   public activateItem(dashboardLayoutItem: DashboardLayoutItem) {
-    // TODO: activate item and recalculate priority for all the other items, except current one
+    const layoutItemHtmlElement = this.dashboardLayoutItemElementMap.get(dashboardLayoutItem);
+    let siblings = this.getSiblings(dashboardLayoutItem, false);
+
+    const sameElementItems = [];
+    siblings = siblings.filter((item: DashboardLayoutItem) => {
+      if (layoutItemHtmlElement !== this.dashboardLayoutItemElementMap.get(item)) {
+        return true;
+      }
+
+      sameElementItems.push(item);
+      return false;
+    });
+
+    siblings.sort((firstItem: DashboardLayoutItem, secondItem: DashboardLayoutItem) => {
+      return secondItem.priority - firstItem.priority;
+    });
+
+    const elementPriorities = new Map<HTMLElement, number>();
+    let currentPriority = 0;
+    siblings.forEach((item: DashboardLayoutItem) => {
+      const itemHtmlElement = this.dashboardLayoutItemElementMap.get(item);
+
+      if (elementPriorities.has(itemHtmlElement)) {
+        item.priority = elementPriorities.get(itemHtmlElement);
+      } else {
+        elementPriorities.set(itemHtmlElement, item.priority = currentPriority);
+        currentPriority++;
+      }
+    });
+
+    sameElementItems.forEach(item => {
+      item.priority = currentPriority;
+    });
+
+    dashboardLayoutItem.priority = currentPriority;
   }
 
   public startDrag(dashboardLayoutItem: DashboardLayoutItem) {
@@ -592,17 +626,20 @@ export class DashboardLayoutService {
       || firstRectangle.bottom < secondRectangle.top);
   }
 
-  private getSiblings(dashboardLayoutItem) {
+  private getSiblings(
+    dashboardLayoutItem: DashboardLayoutItem,
+    filterSameHtmlElementItems = true
+  ) {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
 
     const result = [];
     (this.containerElementDashboardLayoutItemsMap.get(containerElement) || [])
       .forEach(item => {
         if (item !== dashboardLayoutItem
-          && this.dashboardLayoutItemElementMap.get(item)
-            !== this.dashboardLayoutItemElementMap.get(dashboardLayoutItem)
-          && result.every(resultItem => this.dashboardLayoutItemElementMap.get(resultItem)
-              !== this.dashboardLayoutItemElementMap.get(item))
+          && (!filterSameHtmlElementItems || (this.dashboardLayoutItemElementMap.get(item)
+              !== this.dashboardLayoutItemElementMap.get(dashboardLayoutItem)
+            && result.every(resultItem => this.dashboardLayoutItemElementMap.get(resultItem)
+              !== this.dashboardLayoutItemElementMap.get(item))))
         ) {
           result.push(item);
         }
