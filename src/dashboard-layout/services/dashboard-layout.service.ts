@@ -219,7 +219,7 @@ export class DashboardLayoutService {
             ) {
               const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.right;
 
-              if (dist > 0 && dist <= currentSnapSize && dist < snapSize) {
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
                 snapSize = dist;
                 snapOffset = new OffsetModel(dist, 0);
               }
@@ -232,11 +232,11 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = layoutItemBoundingClientRect.left - side.beginningCoordinates.x;
+              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.left;
 
-              if (dist > 0 && dist <= currentSnapSize && dist < snapSize) {
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
                 snapSize = dist;
-                snapOffset = new OffsetModel(-dist, 0);
+                snapOffset = new OffsetModel(dist, 0);
               }
             }
             break;
@@ -249,7 +249,7 @@ export class DashboardLayoutService {
             ) {
               const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.bottom;
 
-              if (dist > 0 && dist <= currentSnapSize && dist < snapSize) {
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
                 snapSize = dist;
                 snapOffset = new OffsetModel(0, dist);
               }
@@ -262,11 +262,11 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = layoutItemBoundingClientRect.top - side.beginningCoordinates.y;
+              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.top;
 
-              if (dist > 0 && dist <= currentSnapSize && dist < snapSize) {
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
                 snapSize = dist;
-                snapOffset = new OffsetModel(0, -dist);
+                snapOffset = new OffsetModel(0, dist);
               }
             }
             break;
@@ -283,7 +283,12 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
+              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.left;
 
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
+                snapSize = dist;
+                snapOffset = new OffsetModel(0, dist);
+              }
             }
             break;
           case RectangleSideType.right:
@@ -293,7 +298,12 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
+              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.right;
 
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
+                snapSize = dist;
+                snapOffset = new OffsetModel(0, dist);
+              }
             }
             break;
           case RectangleSideType.top:
@@ -303,7 +313,12 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
+              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.top;
 
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
+                snapSize = dist;
+                snapOffset = new OffsetModel(0, dist);
+              }
             }
             break;
           case RectangleSideType.bottom:
@@ -313,7 +328,12 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
+              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.bottom;
 
+              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
+                snapSize = dist;
+                snapOffset = new OffsetModel(0, dist);
+              }
             }
             break;
         }
