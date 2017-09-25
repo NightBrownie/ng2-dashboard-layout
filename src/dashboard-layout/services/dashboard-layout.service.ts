@@ -188,20 +188,8 @@ export class DashboardLayoutService {
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel
   ): OffsetModel {
-    let possibleXOffset = 0;
-    let possibleYOffset = 0;
-
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
-
-    const layoutItemTopLeftExpectedCoordinates = new CoordinatesModel(
-      layoutItemBoundingClientRect.left + offset.x,
-      layoutItemBoundingClientRect.top + offset.y
-    );
-    const layoutItemBottomRightExpectedCoordinates = new CoordinatesModel(
-      layoutItemBoundingClientRect.right + offset.x,
-      layoutItemBoundingClientRect.bottom + offset.y
-    );
 
     // try to snap item to other items
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem);
@@ -209,183 +197,32 @@ export class DashboardLayoutService {
     // TODO: remove after filtering is applied
     console.log(siblingVisibleRectangleSides.length);
 
-    const snapOffset = new OffsetModel(0, 0);
-    siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
-      //noinspection TsLint
-      const currentSnapMode = dashboardLayoutItem.snapToDashboardItemsMode | side.snapMode;
-      const currentSnapSize = Math.max(dashboardLayoutItem.snapRadius, side.snapRadius);
+    const snapOffset = this.getSnapOffset(
+      new CoordinatesModel(
+        layoutItemBoundingClientRect.left + offset.x,
+        layoutItemBoundingClientRect.top + offset.y
+      ),
+      new CoordinatesModel(
+        layoutItemBoundingClientRect.right + offset.x,
+        layoutItemBoundingClientRect.bottom + offset.y
+      ),
+      siblingVisibleRectangleSides,
+      dashboardLayoutItem.snapToDashboardItemsMode,
+      dashboardLayoutItem.snapRadius
+    );
 
-      //noinspection TsLint
-      if (currentSnapMode & SnappingMode.outer) {
-        switch (side.sideType) {
-          case RectangleSideType.left:
-            if (this.checkParallelLinesOverlapOnY(
-              layoutItemTopLeftExpectedCoordinates.y,
-              layoutItemBottomRightExpectedCoordinates.y,
-              side.beginningCoordinates.y,
-              side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemBottomRightExpectedCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.right:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftExpectedCoordinates.y,
-                layoutItemBottomRightExpectedCoordinates.y,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemTopLeftExpectedCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.top:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftExpectedCoordinates.x,
-                layoutItemBottomRightExpectedCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemBottomRightExpectedCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-          case RectangleSideType.bottom:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftExpectedCoordinates.x,
-                layoutItemBottomRightExpectedCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemTopLeftExpectedCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-        }
-      }
-
-      //noinspection TsLint
-      if (currentSnapMode & SnappingMode.inner) {
-        switch (side.sideType) {
-          case RectangleSideType.left:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftExpectedCoordinates.y,
-                layoutItemBottomRightExpectedCoordinates.y,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemTopLeftExpectedCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.right:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftExpectedCoordinates.y,
-                layoutItemBottomRightExpectedCoordinates.y,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemBottomRightExpectedCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.top:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftExpectedCoordinates.x,
-                layoutItemBottomRightExpectedCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemTopLeftExpectedCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-          case RectangleSideType.bottom:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftExpectedCoordinates.x,
-                layoutItemBottomRightExpectedCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemBottomRightExpectedCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-        }
-      }
-    });
-
-    offset.x += snapOffset.x;
-    offset.y += snapOffset.y;
-
-    // check dashboard bounds for x axis
-    if (layoutItemBoundingClientRect.left + offset.x >= containerBoundingClientRect.left
-      && layoutItemBoundingClientRect.right + offset.x <= containerBoundingClientRect.right
-    ) {
-      possibleXOffset = offset.x;
-    } else if (layoutItemBoundingClientRect.width <= containerBoundingClientRect.width
-      && layoutItemBoundingClientRect.right + offset.x > containerBoundingClientRect.right
-    ) {
-      possibleXOffset = containerBoundingClientRect.right - layoutItemBoundingClientRect.right;
-    } else {
-      possibleXOffset = containerBoundingClientRect.left - layoutItemBoundingClientRect.left;
-    }
-
-    // check dashboard bounds for y axis
-    if (layoutItemBoundingClientRect.top + offset.y >= containerBoundingClientRect.top
-      && layoutItemBoundingClientRect.bottom + offset.y <= containerBoundingClientRect.bottom
-    ) {
-      possibleYOffset = offset.y;
-    } else if (layoutItemBoundingClientRect.height <= containerBoundingClientRect.height
-      && layoutItemBoundingClientRect.bottom + offset.y > containerBoundingClientRect.bottom
-    ) {
-      possibleYOffset = containerBoundingClientRect.bottom - layoutItemBoundingClientRect.bottom;
-    } else {
-      possibleYOffset = containerBoundingClientRect.top - layoutItemBoundingClientRect.top;
-    }
-
-    return new OffsetModel(possibleXOffset, possibleYOffset);
+    return this.boundItemOffsetToDashboard(
+      containerBoundingClientRect,
+      new CoordinatesModel(
+        layoutItemBoundingClientRect.left,
+        layoutItemBoundingClientRect.top
+      ),
+      new CoordinatesModel(
+        layoutItemBoundingClientRect.right,
+        layoutItemBoundingClientRect.bottom
+      ),
+      new OffsetModel(offset.x + snapOffset.x, offset.y + snapOffset.y)
+    );
   }
 
   private getPossibleResizeOffset(
@@ -645,5 +482,199 @@ export class DashboardLayoutService {
   ): boolean {
     return !(firstLineBeginningYCoordinate > secondLineEndingYCoordinate
     || firstLineEndingYCoordinate < secondLineBeginningYCoordinate);
+  }
+
+  private getSnapOffset(
+    layoutItemTopLeftCoordinates: CoordinatesModel,
+    layoutItemBottomRightCoordinates: CoordinatesModel,
+    siblingVisibleRectangleSides: RectangleSideModel[],
+    snapMode: SnappingMode,
+    snapRadius: number
+  ): OffsetModel {
+    const snapOffset = new OffsetModel(0, 0);
+    siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
+      //noinspection TsLint
+      const currentSnapMode = snapMode | side.snapMode;
+      const currentSnapSize = Math.max(snapRadius, side.snapRadius);
+
+      //noinspection TsLint
+      if (currentSnapMode & SnappingMode.outer) {
+        switch (side.sideType) {
+          case RectangleSideType.left:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y,
+                layoutItemBottomRightCoordinates.y,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              const dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
+              }
+            }
+            break;
+          case RectangleSideType.right:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y,
+                layoutItemBottomRightCoordinates.y,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              const dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
+              }
+            }
+            break;
+          case RectangleSideType.top:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x,
+                layoutItemBottomRightCoordinates.x,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              const dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
+              }
+            }
+            break;
+          case RectangleSideType.bottom:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x,
+                layoutItemBottomRightCoordinates.x,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              const dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
+              }
+            }
+            break;
+        }
+      }
+
+      //noinspection TsLint
+      if (currentSnapMode & SnappingMode.inner) {
+        switch (side.sideType) {
+          case RectangleSideType.left:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y,
+                layoutItemBottomRightCoordinates.y,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              const dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
+              }
+            }
+            break;
+          case RectangleSideType.right:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y,
+                layoutItemBottomRightCoordinates.y,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              const dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
+              }
+            }
+            break;
+          case RectangleSideType.top:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x,
+                layoutItemBottomRightCoordinates.x,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              const dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
+              }
+            }
+            break;
+          case RectangleSideType.bottom:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x,
+                layoutItemBottomRightCoordinates.x,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              const dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
+              }
+            }
+            break;
+        }
+      }
+    });
+
+    return snapOffset;
+  }
+
+  private boundItemOffsetToDashboard (
+    containerBoundingClientRect,
+    layoutItemTopLeftCoordinates: CoordinatesModel,
+    layoutItemBottomRightCoordinates: CoordinatesModel,
+    offset: OffsetModel
+  ) {
+    const boundedOffset = new OffsetModel(0, 0);
+
+    // check dashboard bounds for x axis
+    if (layoutItemTopLeftCoordinates.x + offset.x >= containerBoundingClientRect.left
+      && layoutItemBottomRightCoordinates.x + offset.x <= containerBoundingClientRect.right
+    ) {
+      boundedOffset.x = offset.x;
+    } else if (layoutItemBottomRightCoordinates.x - layoutItemTopLeftCoordinates.x <= containerBoundingClientRect.width
+      && layoutItemBottomRightCoordinates.x + offset.x > containerBoundingClientRect.right
+    ) {
+      boundedOffset.x = containerBoundingClientRect.right - layoutItemBottomRightCoordinates.x;
+    } else {
+      boundedOffset.x = containerBoundingClientRect.left - layoutItemTopLeftCoordinates.x;
+    }
+
+    // check dashboard bounds for y axis
+    if (layoutItemTopLeftCoordinates.y + offset.y >= containerBoundingClientRect.top
+      && layoutItemBottomRightCoordinates.y + offset.y <= containerBoundingClientRect.bottom
+    ) {
+      boundedOffset.y = offset.y;
+    } else if (layoutItemBottomRightCoordinates.y - layoutItemTopLeftCoordinates.y <= containerBoundingClientRect.height
+      && layoutItemBottomRightCoordinates.y + offset.y > containerBoundingClientRect.bottom
+    ) {
+      boundedOffset.y = containerBoundingClientRect.bottom - layoutItemBottomRightCoordinates.y;
+    } else {
+      boundedOffset.y = containerBoundingClientRect.top - layoutItemTopLeftCoordinates.y;
+    }
+
+    return boundedOffset;
   }
 }
