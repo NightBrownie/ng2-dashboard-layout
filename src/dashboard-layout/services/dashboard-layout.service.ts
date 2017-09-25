@@ -194,14 +194,22 @@ export class DashboardLayoutService {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
 
+    const layoutItemTopLeftExpectedCoordinates = new CoordinatesModel(
+      layoutItemBoundingClientRect.left + offset.x,
+      layoutItemBoundingClientRect.top + offset.y
+    );
+    const layoutItemBottomRightExpectedCoordinates = new CoordinatesModel(
+      layoutItemBoundingClientRect.right + offset.x,
+      layoutItemBoundingClientRect.bottom + offset.y
+    );
+
     // try to snap item to other items
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem);
 
     // TODO: remove after filtering is applied
     console.log(siblingVisibleRectangleSides.length);
 
-    let snapOffset = new OffsetModel(0, 0);
-    let snapSize = Infinity;
+    const snapOffset = new OffsetModel(0, 0);
     siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
       //noinspection TsLint
       const currentSnapMode = dashboardLayoutItem.snapToDashboardItemsMode | side.snapMode;
@@ -212,61 +220,65 @@ export class DashboardLayoutService {
         switch (side.sideType) {
           case RectangleSideType.left:
             if (this.checkParallelLinesOverlapOnY(
-              layoutItemBoundingClientRect.top,
-              layoutItemBoundingClientRect.bottom,
+              layoutItemTopLeftExpectedCoordinates.y,
+              layoutItemBottomRightExpectedCoordinates.y,
               side.beginningCoordinates.y,
               side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.right;
+              const dist = side.beginningCoordinates.x - layoutItemBottomRightExpectedCoordinates.x;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(dist, 0);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
               }
             }
             break;
           case RectangleSideType.right:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemBoundingClientRect.top,
-                layoutItemBoundingClientRect.bottom,
+                layoutItemTopLeftExpectedCoordinates.y,
+                layoutItemBottomRightExpectedCoordinates.y,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.left;
+              const dist = side.beginningCoordinates.x - layoutItemTopLeftExpectedCoordinates.x;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(dist, 0);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
               }
             }
             break;
           case RectangleSideType.top:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemBoundingClientRect.left,
-                layoutItemBoundingClientRect.right,
+                layoutItemTopLeftExpectedCoordinates.x,
+                layoutItemBottomRightExpectedCoordinates.x,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.bottom;
+              const dist = side.beginningCoordinates.y - layoutItemBottomRightExpectedCoordinates.y;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
               }
             }
             break;
           case RectangleSideType.bottom:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemBoundingClientRect.left,
-                layoutItemBoundingClientRect.right,
+                layoutItemTopLeftExpectedCoordinates.x,
+                layoutItemBottomRightExpectedCoordinates.x,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.top;
+              const dist = side.beginningCoordinates.y - layoutItemTopLeftExpectedCoordinates.y;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
               }
             }
             break;
@@ -278,61 +290,65 @@ export class DashboardLayoutService {
         switch (side.sideType) {
           case RectangleSideType.left:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemBoundingClientRect.top,
-                layoutItemBoundingClientRect.bottom,
+                layoutItemTopLeftExpectedCoordinates.y,
+                layoutItemBottomRightExpectedCoordinates.y,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.left;
+              const dist = side.beginningCoordinates.x - layoutItemTopLeftExpectedCoordinates.x;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
               }
             }
             break;
           case RectangleSideType.right:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemBoundingClientRect.top,
-                layoutItemBoundingClientRect.bottom,
+                layoutItemTopLeftExpectedCoordinates.y,
+                layoutItemBottomRightExpectedCoordinates.y,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemBoundingClientRect.right;
+              const dist = side.beginningCoordinates.x - layoutItemBottomRightExpectedCoordinates.x;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+              ) {
+                snapOffset.x = dist;
               }
             }
             break;
           case RectangleSideType.top:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemBoundingClientRect.left,
-                layoutItemBoundingClientRect.right,
+                layoutItemTopLeftExpectedCoordinates.x,
+                layoutItemBottomRightExpectedCoordinates.x,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.top;
+              const dist = side.beginningCoordinates.y - layoutItemTopLeftExpectedCoordinates.y;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
               }
             }
             break;
           case RectangleSideType.bottom:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemBoundingClientRect.left,
-                layoutItemBoundingClientRect.right,
+                layoutItemTopLeftExpectedCoordinates.x,
+                layoutItemBottomRightExpectedCoordinates.x,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemBoundingClientRect.bottom;
+              const dist = side.beginningCoordinates.y - layoutItemBottomRightExpectedCoordinates.y;
 
-              if (Math.abs(dist) <= currentSnapSize && dist < snapSize) {
-                snapSize = dist;
-                snapOffset = new OffsetModel(0, dist);
+              if (Math.abs(dist) <= currentSnapSize
+                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+              ) {
+                snapOffset.y = dist;
               }
             }
             break;
