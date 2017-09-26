@@ -73,7 +73,7 @@ export class DashboardLayoutService {
     });
 
     siblings.sort((firstItem: DashboardLayoutItem, secondItem: DashboardLayoutItem) => {
-      return secondItem.priority - firstItem.priority;
+      return firstItem.priority - secondItem.priority;
     });
 
     const elementPriorities = new Map<HTMLElement, number>();
