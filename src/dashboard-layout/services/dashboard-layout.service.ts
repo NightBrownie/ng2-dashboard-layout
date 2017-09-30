@@ -1,13 +1,10 @@
 import {Injectable} from '@angular/core';
 
 import {DashboardLayoutItem} from '../interfaces/dashboard-layout-item.interface';
-import {OffsetModel, CoordinatesModel, ScaleModel, SizeModel} from '../models';
-import {DimensionType} from '../enums/dimension-type.enum';
-import {DEFAULT_PRESCISION_CHARS} from '../constants/default-config';
-import {RectangleModel} from '../models/rectangle.model';
-import {SnappingMode} from '../enums/snapping-mode.enum';
-import {RectangleSideModel} from '../models/rectangle-side.model';
-import {RectangleSideType} from '../enums/rectangle-side-type.enum';
+import {OffsetModel, CoordinatesModel, ScaleModel, SizeModel, RectangleSideModel} from '../models';
+import {DimensionType, SnappingMode, RectangleSideType, DirectionType} from '../enums';
+
+import {DEFAULT_PRESCISION_CHARS} from '../configs/default.config';
 
 
 @Injectable()
@@ -143,86 +140,42 @@ export class DashboardLayoutService {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
-    // try to snap item to other items
+    const resizeSubDirections = (resizeDirection || '').split('');
+
+    // todo: move filtering based on direction to helper function
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem)
       .filter((side: RectangleSideModel) => {
         let sideShouldBeProcessed = false;
 
-        // noinspection TsLint
-        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer) {
-          switch (resizeDirection) {
-            case 'n':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom;
-              break;
-            case 'w':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.right;
-              break;
-            case 's':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top;
-              break;
-            case 'e':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.left;
-              break;
-            case 'nw':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'ne':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'sw':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'se':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.left;
-              break;
-          }
-        }
+        //noinspection TsLint
+        const isOuterSnappingEnabled = dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer;
+        //noinspection TsLint
+        const isInnerSnappingEnabled = dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner;
 
-        // noinspection TsLint
-        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner) {
-          switch (resizeDirection) {
-            case 'n':
+        resizeSubDirections.forEach((resizeSubDirection: string) => {
+          switch (resizeSubDirection) {
+            case DirectionType.north:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.bottom)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.top);
               break;
-            case 'w':
+            case DirectionType.east:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.left;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.left)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.right);
               break;
-            case 's':
+            case DirectionType.west:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.right)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.left);
               break;
-            case 'e':
+            case DirectionType.south:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'nw':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'ne':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'sw':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'se':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.right;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.top)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.bottom);
               break;
           }
-        }
+        });
 
         return sideShouldBeProcessed;
       });
@@ -230,6 +183,7 @@ export class DashboardLayoutService {
     const precalculatedResizeSize = this.getResizeSize(dashboardLayoutItem, resizeOffset, resizeDirection);
     const precalculatedResizeOffset = this.getResizeOffset(resizeOffset, resizeDirection);
 
+    // try to snap item to other items
     const snapOffset = this.getSnapOffset(
       new CoordinatesModel(
         currentItemClientBoundingRect.left + precalculatedResizeOffset.x,
@@ -241,7 +195,8 @@ export class DashboardLayoutService {
       ),
       siblingVisibleRectangleSides,
       dashboardLayoutItem.snapToDashboardItemsMode,
-      dashboardLayoutItem.snapRadius
+      dashboardLayoutItem.snapRadius,
+      resizeDirection
     );
 
     const possibleOffset = this.boundResizeOffsetToDashboard(
@@ -275,86 +230,42 @@ export class DashboardLayoutService {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
 
-    // try to snap item to other items
+    const resizeSubDirections = (resizeDirection || '').split('');
+
+    // todo: move filtering based on direction to helper function
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem)
       .filter((side: RectangleSideModel) => {
         let sideShouldBeProcessed = false;
 
-        // noinspection TsLint
-        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer) {
-          switch (resizeDirection) {
-            case 'n':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom;
-              break;
-            case 'w':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.right;
-              break;
-            case 's':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top;
-              break;
-            case 'e':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.left;
-              break;
-            case 'nw':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'ne':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'sw':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'se':
-              sideShouldBeProcessed = side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.left;
-              break;
-          }
-        }
+        //noinspection TsLint
+        const isOuterSnappingEnabled = dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.outer;
+        //noinspection TsLint
+        const isInnerSnappingEnabled = dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner;
 
-        // noinspection TsLint
-        if (dashboardLayoutItem.snapToDashboardItemsMode & SnappingMode.inner) {
-          switch (resizeDirection) {
-            case 'n':
+        resizeSubDirections.forEach((resizeSubDirection: string) => {
+          switch (resizeSubDirection) {
+            case DirectionType.north:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.bottom)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.top);
               break;
-            case 'w':
+            case DirectionType.east:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.left;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.left)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.right);
               break;
-            case 's':
+            case DirectionType.west:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.right)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.left);
               break;
-            case 'e':
+            case DirectionType.south:
               sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'nw':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'ne':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.top
-                || side.sideType === RectangleSideType.right;
-              break;
-            case 'sw':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.left;
-              break;
-            case 'se':
-              sideShouldBeProcessed = sideShouldBeProcessed
-                || side.sideType === RectangleSideType.bottom
-                || side.sideType === RectangleSideType.right;
+                || (isOuterSnappingEnabled && side.sideType === RectangleSideType.top)
+                || (isInnerSnappingEnabled && side.sideType === RectangleSideType.bottom);
               break;
           }
-        }
+        });
 
         return sideShouldBeProcessed;
       });
@@ -362,6 +273,7 @@ export class DashboardLayoutService {
     const precalculatedResizeSize = this.getResizeSize(dashboardLayoutItem, resizeOffset, resizeDirection);
     const precalculatedResizeOffset = this.getResizeOffset(resizeOffset, resizeDirection);
 
+    // try to snap item to other items
     const snapOffset = this.getSnapOffset(
       new CoordinatesModel(
         currentItemClientBoundingRect.left + precalculatedResizeOffset.x,
@@ -373,7 +285,8 @@ export class DashboardLayoutService {
       ),
       siblingVisibleRectangleSides,
       dashboardLayoutItem.snapToDashboardItemsMode,
-      dashboardLayoutItem.snapRadius
+      dashboardLayoutItem.snapRadius,
+      resizeDirection
     );
 
     const possibleOffset = this.boundResizeOffsetToDashboard(
@@ -451,7 +364,7 @@ export class DashboardLayoutService {
     containerElement: HTMLElement,
     dashboardLayoutItem: DashboardLayoutItem,
     offset: OffsetModel,
-    resizeDirection,
+    resizeDirection: string,
     minSize: SizeModel = new SizeModel(0, 0)
   ): OffsetModel {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
@@ -460,6 +373,7 @@ export class DashboardLayoutService {
     let minWidth = minSize.width;
     let minHeight = minSize.height;
 
+    // todo: create converter
     if (minSize.sizeType === DimensionType.persentile) {
       minWidth = containerBoundingClientRect.width * minSize.width / 100;
       minHeight = containerBoundingClientRect.height * minSize.height / 100;
@@ -467,49 +381,38 @@ export class DashboardLayoutService {
 
     const possibleOffset = new OffsetModel(offset.x, offset.y);
 
-    // offset x coordinate
-    switch (resizeDirection) {
-      case 'w':
-      case 'nw':
-      case 'sw':
-        if ((currentItemClientBoundingRect.left - containerBoundingClientRect.left) + possibleOffset.x < 0) {
-          possibleOffset.x = -(currentItemClientBoundingRect.left - containerBoundingClientRect.left);
-        } else if (possibleOffset.x > currentItemClientBoundingRect.width - minWidth) {
-          possibleOffset.x = currentItemClientBoundingRect.width - minWidth;
-        }
-        break;
-      case 'e':
-      case 'ne':
-      case 'se':
-        if (currentItemClientBoundingRect.width - minWidth + possibleOffset.x < 0) {
-          possibleOffset.x = -(currentItemClientBoundingRect.width + minWidth);
-        } else if (possibleOffset.x > containerBoundingClientRect.right - currentItemClientBoundingRect.right) {
-          possibleOffset.x = containerBoundingClientRect.right - currentItemClientBoundingRect.right;
-        }
-        break;
-    }
-
-    // offset y coordinate
-    switch (resizeDirection) {
-      case 'n':
-      case 'ne':
-      case 'nw':
-        if ((currentItemClientBoundingRect.top - containerBoundingClientRect.top) + possibleOffset.y < 0) {
-          possibleOffset.y = -(currentItemClientBoundingRect.top - containerBoundingClientRect.top);
-        } else if (possibleOffset.y > currentItemClientBoundingRect.height - minHeight) {
-          possibleOffset.y = currentItemClientBoundingRect.height - minHeight;
-        }
-        break;
-      case 's':
-      case 'se':
-      case 'sw':
-        if (currentItemClientBoundingRect.height - minHeight + possibleOffset.y < 0) {
-          possibleOffset.y = -(currentItemClientBoundingRect.height + minHeight);
-        } else if (possibleOffset.y > containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom) {
-          possibleOffset.y = containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom;
-        }
-        break;
-    }
+    (resizeDirection || '').split('').forEach((resizeSubDirection: string) => {
+      switch (resizeSubDirection) {
+        case DirectionType.north:
+          if ((currentItemClientBoundingRect.top - containerBoundingClientRect.top) + possibleOffset.y < 0) {
+            possibleOffset.y = -(currentItemClientBoundingRect.top - containerBoundingClientRect.top);
+          } else if (possibleOffset.y > currentItemClientBoundingRect.height - minHeight) {
+            possibleOffset.y = currentItemClientBoundingRect.height - minHeight;
+          }
+          break;
+        case DirectionType.east:
+          if (currentItemClientBoundingRect.width - minWidth + possibleOffset.x < 0) {
+            possibleOffset.x = -(currentItemClientBoundingRect.width + minWidth);
+          } else if (possibleOffset.x > containerBoundingClientRect.right - currentItemClientBoundingRect.right) {
+            possibleOffset.x = containerBoundingClientRect.right - currentItemClientBoundingRect.right;
+          }
+          break;
+        case DirectionType.west:
+          if ((currentItemClientBoundingRect.left - containerBoundingClientRect.left) + possibleOffset.x < 0) {
+            possibleOffset.x = -(currentItemClientBoundingRect.left - containerBoundingClientRect.left);
+          } else if (possibleOffset.x > currentItemClientBoundingRect.width - minWidth) {
+            possibleOffset.x = currentItemClientBoundingRect.width - minWidth;
+          }
+          break;
+        case DirectionType.south:
+          if (currentItemClientBoundingRect.height - minHeight + possibleOffset.y < 0) {
+            possibleOffset.y = -(currentItemClientBoundingRect.height + minHeight);
+          } else if (possibleOffset.y > containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom) {
+            possibleOffset.y = containerBoundingClientRect.bottom - currentItemClientBoundingRect.bottom;
+          }
+          break;
+      }
+    });
 
     return possibleOffset;
   }
@@ -517,24 +420,20 @@ export class DashboardLayoutService {
   // calculate offset to show dashboard item on resize
   private getResizeOffset(
     resizeOffset: OffsetModel,
-    resizeDirection
+    resizeDirection: string
   ): OffsetModel {
     const resultOffset = new OffsetModel(0, 0);
 
-    switch (resizeDirection) {
-      case 'nw':
-        resultOffset.x = resizeOffset.x;
-        resultOffset.y = resizeOffset.y;
-        break;
-      case 'w':
-      case 'sw':
-        resultOffset.x = resizeOffset.x;
-        break;
-      case 'n':
-      case 'ne':
-        resultOffset.y = resizeOffset.y;
-        break;
-    }
+    (resizeDirection || '').split('').forEach((resizeSubDirection: string) => {
+      switch (resizeSubDirection) {
+        case DirectionType.west:
+          resultOffset.x = resizeOffset.x;
+          break;
+        case DirectionType.north:
+          resultOffset.y = resizeOffset.y;
+          break;
+      }
+    });
 
     return resultOffset;
   }
@@ -542,7 +441,7 @@ export class DashboardLayoutService {
   private getResizeSize(
     dashboardLayoutItem: DashboardLayoutItem,
     resizeOffset: OffsetModel,
-    resizeDirection
+    resizeDirection: string
   ): SizeModel {
     const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
     const resultSize = new SizeModel(
@@ -551,41 +450,30 @@ export class DashboardLayoutService {
       DimensionType.pixels
     );
 
-    switch (resizeDirection) {
-      case 'w':
-        resultSize.width -= resizeOffset.x;
-        break;
-      case 'nw':
-        resultSize.width -= resizeOffset.x;
-        resultSize.height -= resizeOffset.y;
-        break;
-      case 'n':
-        resultSize.height -= resizeOffset.y;
-        break;
-      case 'ne':
-        resultSize.width += resizeOffset.x;
-        resultSize.height -= resizeOffset.y;
-        break;
-      case 'e':
-        resultSize.width += resizeOffset.x;
-        break;
-      case 'se':
-        resultSize.width += resizeOffset.x;
-        resultSize.height += resizeOffset.y;
-        break;
-      case 's':
-        resultSize.height += resizeOffset.y;
-        break;
-      case 'sw':
-        resultSize.width -= resizeOffset.x;
-        resultSize.height += resizeOffset.y;
-        break;
-    }
+    (resizeDirection || '').split('').forEach((resizeSubDirection: string) => {
+      switch (resizeSubDirection) {
+        case DirectionType.north:
+          resultSize.height -= resizeOffset.y;
+          break;
+        case DirectionType.east:
+          resultSize.width += resizeOffset.x;
+          break;
+        case DirectionType.west:
+          resultSize.width -= resizeOffset.x;
+          break;
+        case DirectionType.south:
+          resultSize.height += resizeOffset.y;
+          break;
+      }
+    });
 
     return resultSize;
   }
 
-  private getPercentageCoordinates(containerElement: HTMLElement, coordinates: CoordinatesModel): CoordinatesModel {
+  private getPercentageCoordinates(
+    containerElement: HTMLElement,
+    coordinates: CoordinatesModel
+  ): CoordinatesModel {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
 
     return new CoordinatesModel(
@@ -617,13 +505,6 @@ export class DashboardLayoutService {
     }
 
     return containerBoundingClientRect;
-  }
-
-  private checkRectanglesIntersect(firstRectangle: RectangleModel, secondRectangle: RectangleModel): boolean {
-    return !(firstRectangle.left > secondRectangle.right
-      || firstRectangle.right < secondRectangle.left
-      || firstRectangle.top > secondRectangle.bottom
-      || firstRectangle.bottom < secondRectangle.top);
   }
 
   private getSiblings(
@@ -716,7 +597,8 @@ export class DashboardLayoutService {
     layoutItemBottomRightCoordinates: CoordinatesModel,
     siblingVisibleRectangleSides: RectangleSideModel[],
     snapMode: SnappingMode,
-    snapRadius: number
+    snapRadius: number,
+    snapDirection?: string
   ): OffsetModel {
     const snapOffset = new OffsetModel(0, 0);
     siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
@@ -725,77 +607,11 @@ export class DashboardLayoutService {
       const currentSnapSize = Math.max(snapRadius, side.snapRadius);
 
       //noinspection TsLint
-      if (currentSnapMode & SnappingMode.outer) {
-        switch (side.sideType) {
-          case RectangleSideType.left:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y,
-                layoutItemBottomRightCoordinates.y,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.right:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y,
-                layoutItemBottomRightCoordinates.y,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              const dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
-              }
-            }
-            break;
-          case RectangleSideType.top:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x,
-                layoutItemBottomRightCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-          case RectangleSideType.bottom:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x,
-                layoutItemBottomRightCoordinates.x,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              const dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
-
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
-              }
-            }
-            break;
-        }
-      }
-
+      const isOuterSnappingEnabled = currentSnapMode & SnappingMode.outer;
       //noinspection TsLint
-      if (currentSnapMode & SnappingMode.inner) {
+      const isInnerSnappingEnabled = currentSnapMode & SnappingMode.inner;
+
+      if (isOuterSnappingEnabled || isInnerSnappingEnabled) {
         switch (side.sideType) {
           case RectangleSideType.left:
             if (this.checkParallelLinesOverlapOnY(
@@ -804,12 +620,26 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+              let dist;
 
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
+              if (isOuterSnappingEnabled) {
+                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled) {
+                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
               }
             }
             break;
@@ -820,12 +650,26 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
-              const dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+              let dist;
 
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-              ) {
-                snapOffset.x = dist;
+              if (isOuterSnappingEnabled) {
+                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled) {
+                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
               }
             }
             break;
@@ -836,12 +680,26 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+              let dist;
 
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
+              if (isOuterSnappingEnabled) {
+                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled) {
+                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
               }
             }
             break;
@@ -852,12 +710,26 @@ export class DashboardLayoutService {
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
-              const dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+              let dist;
 
-              if (Math.abs(dist) <= currentSnapSize
-                && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-              ) {
-                snapOffset.y = dist;
+              if (isOuterSnappingEnabled) {
+                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled) {
+                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
               }
             }
             break;
