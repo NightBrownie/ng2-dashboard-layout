@@ -622,7 +622,7 @@ export class DashboardLayoutService {
             ) {
               let dist;
 
-              if (isOuterSnappingEnabled) {
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
                 dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -632,7 +632,7 @@ export class DashboardLayoutService {
                 }
               }
 
-              if (isInnerSnappingEnabled) {
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
                 dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -652,7 +652,7 @@ export class DashboardLayoutService {
             ) {
               let dist;
 
-              if (isOuterSnappingEnabled) {
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
                 dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -662,7 +662,7 @@ export class DashboardLayoutService {
                 }
               }
 
-              if (isInnerSnappingEnabled) {
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
                 dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -682,7 +682,7 @@ export class DashboardLayoutService {
             ) {
               let dist;
 
-              if (isOuterSnappingEnabled) {
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
                 dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -692,7 +692,7 @@ export class DashboardLayoutService {
                 }
               }
 
-              if (isInnerSnappingEnabled) {
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
                 dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -712,7 +712,7 @@ export class DashboardLayoutService {
             ) {
               let dist;
 
-              if (isOuterSnappingEnabled) {
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
                 dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
 
                 if (Math.abs(dist) <= currentSnapSize
@@ -722,7 +722,7 @@ export class DashboardLayoutService {
                 }
               }
 
-              if (isInnerSnappingEnabled) {
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
                 dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
 
                 if (Math.abs(dist) <= currentSnapSize
