@@ -7,7 +7,7 @@ import {DomSanitizer} from '@angular/platform-browser';
 import {DashboardLayoutItemDirective} from './dashboard-layout-item.directive';
 import {CoordinatesModel} from '../models/coordinates.model';
 import {Subscription} from 'rxjs/Subscription';
-import {ResizerDirective} from './resizer.directive';
+import {ResizeHandleDirective} from './resize-handle.directive';
 import {ResizeStartModel} from '../models/resize-start.model';
 import {DashboardLayoutService} from '../services/dashboard-layout.service';
 
@@ -24,7 +24,7 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
   @Input() private resizable: boolean;
   @Output() private resizing: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  @ContentChildren(ResizerDirective) private resizers: QueryList<ResizerDirective>;
+  @ContentChildren(ResizeHandleDirective) private resizers: QueryList<ResizeHandleDirective>;
 
   @HostListener('window:mousemove', ['$event.clientX', '$event.clientY'])
   private onMouseMove(x, y) {

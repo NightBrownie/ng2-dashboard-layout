@@ -6,10 +6,10 @@ import {ResizeStartModel} from '../models/resize-start.model';
 
 
 @Directive({
-  selector: '[resizer]'
+  selector: '[resizeHandle]'
 })
-export class ResizerDirective {
-  @Input('resizer') resizer: string;
+export class ResizeHandleDirective {
+  @Input('resizeHandle') resizeHandle: string;
 
   private _resizeStartSubject: Subject<ResizeStartModel> = new Subject<ResizeStartModel>();
 
@@ -19,6 +19,6 @@ export class ResizerDirective {
 
   @HostListener('mousedown', ['$event.clientX', '$event.clientY'])
   private onMouseDown(x, y) {
-    this.resizeStartSubject.next(new ResizeStartModel(new CoordinatesModel(x, y), this.resizer));
+    this.resizeStartSubject.next(new ResizeStartModel(new CoordinatesModel(x, y), this.resizeHandle));
   }
 }

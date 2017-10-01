@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import {DraggableDirective} from './directives/draggable.directive';
 import {DragHandleDirective} from './directives/drag-handle.directive';
 import {ResizableDirective} from './directives/resizable.directive';
-import {ResizerDirective} from './directives/resizer.directive';
+import {ResizeHandleDirective} from './directives/resize-handle.directive';
 import {DashboardLayoutService} from './services/dashboard-layout.service';
 import {DashboardLayoutItemDirective} from './directives/dashboard-layout-item.directive';
 
@@ -14,13 +14,13 @@ import {DashboardLayoutItemDirective} from './directives/dashboard-layout-item.d
     DraggableDirective,
     DragHandleDirective,
     ResizableDirective,
-    ResizerDirective
+    ResizeHandleDirective
   ],
   exports: [
     DraggableDirective,
     DragHandleDirective,
     ResizableDirective,
-    ResizerDirective
+    ResizeHandleDirective
   ],
   providers: [
     DashboardLayoutService
