@@ -615,8 +615,8 @@ export class DashboardLayoutService {
         switch (side.sideType) {
           case RectangleSideType.left:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y,
-                layoutItemBottomRightCoordinates.y,
+                layoutItemTopLeftCoordinates.y - currentSnapSize,
+                layoutItemBottomRightCoordinates.y + currentSnapSize,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
@@ -645,8 +645,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.right:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y,
-                layoutItemBottomRightCoordinates.y,
+                layoutItemTopLeftCoordinates.y - currentSnapSize,
+                layoutItemBottomRightCoordinates.y + currentSnapSize,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
@@ -675,8 +675,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.top:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x,
-                layoutItemBottomRightCoordinates.x,
+                layoutItemTopLeftCoordinates.x - currentSnapSize,
+                layoutItemBottomRightCoordinates.x + currentSnapSize,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
@@ -705,8 +705,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.bottom:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x,
-                layoutItemBottomRightCoordinates.x,
+                layoutItemTopLeftCoordinates.x - currentSnapSize,
+                layoutItemBottomRightCoordinates.x + currentSnapSize,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
