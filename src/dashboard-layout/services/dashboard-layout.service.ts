@@ -531,45 +531,63 @@ export class DashboardLayoutService {
   }
 
   private getSiblingVisibleRectangleSides(dashboardLayoutItem: DashboardLayoutItem) {
-    const siblingVisibleRectangleSides = [];
+    const siblingsVisibleRectangleSides = [];
     const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
-    siblingDashboardLayoutItems.forEach(item => {
+    siblingDashboardLayoutItems.forEach((item: DashboardLayoutItem) => {
         const itemBoundingClientRect = item.getElementClientBoundingRect();
+        const itemVisibleRectangleSides = [];
 
-        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
-          RectangleSideType.left,
+        this.getVisibleRectangleSideParts(
+          siblingDashboardLayoutItems,
+          new RectangleSideModel(
+            new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
+            new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
+            RectangleSideType.left
+          ),
+          item.priority
+        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+
+        this.getVisibleRectangleSideParts(
+          siblingDashboardLayoutItems,
+          new RectangleSideModel(
+            new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
+            new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
+            RectangleSideType.right,
+          ),
+          item.priority
+        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+
+        this.getVisibleRectangleSideParts(
+          siblingDashboardLayoutItems,
+          new RectangleSideModel(
+            new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
+            new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
+            RectangleSideType.top,
+          ),
+          item.priority
+        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+
+        this.getVisibleRectangleSideParts(
+          siblingDashboardLayoutItems,
+          new RectangleSideModel(
+            new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
+            new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
+            RectangleSideType.bottom,
+          ),
+          item.priority
+        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+
+        itemVisibleRectangleSides.forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(
+          new SnappableRectangleSideModel(
+          side.beginningCoordinates,
+          side.endingCoordinates,
+          side.sideType,
           item.snapToDashboardItemsMode,
           item.snapRadius
-        ));
-
-        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
-          RectangleSideType.right,
-          item.snapToDashboardItemsMode,
-          item.snapRadius
-        ));
-
-        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
-          RectangleSideType.top,
-          item.snapToDashboardItemsMode,
-          item.snapRadius
-        ));
-
-        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
-          new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
-          new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
-          RectangleSideType.bottom,
-          item.snapToDashboardItemsMode,
-          item.snapRadius
-        ));
+        )));
       });
 
-    return siblingVisibleRectangleSides;
+    return siblingsVisibleRectangleSides;
   }
 
   private getVisibleRectangleSideParts(
@@ -584,8 +602,112 @@ export class DashboardLayoutService {
       .forEach((dashboardLayoutItem: DashboardLayoutItem) => {
         const newSideParts = [];
 
+        const itemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+
         sideParts.forEach((sidePart: RectangleSideModel) => {
-          // todo: replace with filtering and side splitting logic
+          switch (side.sideType) {
+            case RectangleSideType.top:
+            case RectangleSideType.bottom:
+              if (itemBoundingClientRect.top > sidePart.endingCoordinates.y
+                || itemBoundingClientRect.top + itemBoundingClientRect.height < sidePart.beginningCoordinates.y
+                || itemBoundingClientRect.left >= sidePart.endingCoordinates.x
+                || itemBoundingClientRect.left + itemBoundingClientRect.width <= sidePart.beginningCoordinates.x
+              ) {
+                newSideParts.push(sidePart);
+              } else if (itemBoundingClientRect.left > sidePart.beginningCoordinates.x
+                && itemBoundingClientRect.left + itemBoundingClientRect.width < sidePart.endingCoordinates.x
+              ) {
+                // left side
+                newSideParts.push(new RectangleSideModel(
+                  sidePart.beginningCoordinates,
+                  new CoordinatesModel(itemBoundingClientRect.left, sidePart.endingCoordinates.y),
+                  side.sideType
+                ));
+
+                // right side
+                newSideParts.push(new RectangleSideModel(
+                  new CoordinatesModel(
+                    itemBoundingClientRect.left + itemBoundingClientRect.width,
+                    sidePart.beginningCoordinates.y
+                  ),
+                  sidePart.endingCoordinates,
+                  side.sideType
+                ));
+              } else if (itemBoundingClientRect.left > sidePart.beginningCoordinates.x
+                && itemBoundingClientRect.left + itemBoundingClientRect.width >= sidePart.endingCoordinates.x
+              ) {
+                // left side
+                newSideParts.push(new RectangleSideModel(
+                  sidePart.beginningCoordinates,
+                  new CoordinatesModel(itemBoundingClientRect.left, sidePart.endingCoordinates.y),
+                  side.sideType
+                ));
+              } else if (itemBoundingClientRect.left <= sidePart.beginningCoordinates.x
+                && itemBoundingClientRect.left + itemBoundingClientRect.width < sidePart.endingCoordinates.x
+              ) {
+                // right side
+                newSideParts.push(new RectangleSideModel(
+                  new CoordinatesModel(
+                    itemBoundingClientRect.left + itemBoundingClientRect.width,
+                    sidePart.beginningCoordinates.y
+                  ),
+                  sidePart.endingCoordinates,
+                  side.sideType
+                ));
+              }
+              break;
+            case RectangleSideType.left:
+            case RectangleSideType.right:
+              if (itemBoundingClientRect.top >= sidePart.endingCoordinates.y
+                || itemBoundingClientRect.top + itemBoundingClientRect.height <= sidePart.beginningCoordinates.y
+                || itemBoundingClientRect.left > sidePart.endingCoordinates.x
+                || itemBoundingClientRect.left + itemBoundingClientRect.width < sidePart.beginningCoordinates.x
+              ) {
+                newSideParts.push(sidePart);
+              } else if (itemBoundingClientRect.top > sidePart.beginningCoordinates.y
+                && itemBoundingClientRect.top + itemBoundingClientRect.height < sidePart.endingCoordinates.y
+              ) {
+                // top side
+                newSideParts.push(new RectangleSideModel(
+                  sidePart.beginningCoordinates,
+                  new CoordinatesModel(sidePart.endingCoordinates.x, itemBoundingClientRect.top),
+                  side.sideType
+                ));
+
+                // bottom side
+                newSideParts.push(new RectangleSideModel(
+                  new CoordinatesModel(
+                    sidePart.beginningCoordinates.x,
+                    itemBoundingClientRect.top + itemBoundingClientRect.height
+                  ),
+                  sidePart.endingCoordinates,
+                  side.sideType
+                ));
+              } else if (itemBoundingClientRect.top > sidePart.beginningCoordinates.y
+                && itemBoundingClientRect.top + itemBoundingClientRect.height >= sidePart.endingCoordinates.y
+              ) {
+                // top side
+                newSideParts.push(new RectangleSideModel(
+                  sidePart.beginningCoordinates,
+                  new CoordinatesModel(sidePart.endingCoordinates.x, itemBoundingClientRect.top),
+                  side.sideType
+                ));
+              } else if (itemBoundingClientRect.top <= sidePart.beginningCoordinates.y
+                && itemBoundingClientRect.top + itemBoundingClientRect.height < sidePart.endingCoordinates.y
+              ) {
+                // bottom side
+                newSideParts.push(new RectangleSideModel(
+                  new CoordinatesModel(
+                    sidePart.beginningCoordinates.x,
+                    itemBoundingClientRect.top + itemBoundingClientRect.height
+                  ),
+                  sidePart.endingCoordinates,
+                  side.sideType
+                ));
+              }
+              break;
+          }
+
           newSideParts.push(sidePart);
         });
 
