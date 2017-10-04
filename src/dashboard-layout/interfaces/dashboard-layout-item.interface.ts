@@ -3,7 +3,7 @@ import {SnappingMode} from '../enums/snapping-mode.enum';
 
 
 export interface DashboardLayoutItem {
-  priority;
+  priority: number;
   snapToDashboardItemsMode: SnappingMode;
   snapRadius: number;
 

@@ -5,6 +5,7 @@ import {OffsetModel, CoordinatesModel, ScaleModel, SizeModel, RectangleSideModel
 import {DimensionType, SnappingMode, RectangleSideType, DirectionType} from '../enums';
 
 import {DEFAULT_PRESCISION_CHARS} from '../configs/default.config';
+import {SnappableRectangleSideModel} from '../models/snappable-rectangle-side.model';
 
 
 @Injectable()
@@ -531,12 +532,11 @@ export class DashboardLayoutService {
 
   private getSiblingVisibleRectangleSides(dashboardLayoutItem: DashboardLayoutItem) {
     const siblingVisibleRectangleSides = [];
-    // TODO: add filtering for visible sides
-    this.getSiblings(dashboardLayoutItem)
-      .forEach(item => {
+    const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
+    siblingDashboardLayoutItems.forEach(item => {
         const itemBoundingClientRect = item.getElementClientBoundingRect();
 
-        siblingVisibleRectangleSides.push(new RectangleSideModel(
+        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
           new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
           new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
           RectangleSideType.left,
@@ -544,7 +544,7 @@ export class DashboardLayoutService {
           item.snapRadius
         ));
 
-        siblingVisibleRectangleSides.push(new RectangleSideModel(
+        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
           new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
           new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
           RectangleSideType.right,
@@ -552,7 +552,7 @@ export class DashboardLayoutService {
           item.snapRadius
         ));
 
-        siblingVisibleRectangleSides.push(new RectangleSideModel(
+        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
           new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.top),
           new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.top),
           RectangleSideType.top,
@@ -560,7 +560,7 @@ export class DashboardLayoutService {
           item.snapRadius
         ));
 
-        siblingVisibleRectangleSides.push(new RectangleSideModel(
+        siblingVisibleRectangleSides.push(new SnappableRectangleSideModel(
           new CoordinatesModel(itemBoundingClientRect.left, itemBoundingClientRect.bottom),
           new CoordinatesModel(itemBoundingClientRect.right, itemBoundingClientRect.bottom),
           RectangleSideType.bottom,
@@ -570,6 +570,29 @@ export class DashboardLayoutService {
       });
 
     return siblingVisibleRectangleSides;
+  }
+
+  private getVisibleRectangleSideParts(
+    siblingDashboardLayoutItems: DashboardLayoutItem[],
+    side: RectangleSideModel,
+    sidePriority: number
+  ): RectangleSideModel[] {
+    let sideParts = [side];
+
+    siblingDashboardLayoutItems
+      .filter((dashboardLayoutItem: DashboardLayoutItem) => dashboardLayoutItem.priority > sidePriority)
+      .forEach((dashboardLayoutItem: DashboardLayoutItem) => {
+        const newSideParts = [];
+
+        sideParts.forEach((sidePart: RectangleSideModel) => {
+          // todo: replace with filtering and side splitting logic
+          newSideParts.push(sidePart);
+        });
+
+        sideParts = newSideParts;
+      });
+
+    return sideParts;
   }
 
   private checkParallelLinesOverlapOnX(
@@ -601,7 +624,7 @@ export class DashboardLayoutService {
     snapDirection?: string
   ): OffsetModel {
     const snapOffset = new OffsetModel(0, 0);
-    siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
+    siblingVisibleRectangleSides.forEach((side: SnappableRectangleSideModel) => {
       //noinspection TsLint
       const currentSnapMode = snapMode | side.snapMode;
       const currentSnapSize = Math.max(snapRadius, side.snapRadius);

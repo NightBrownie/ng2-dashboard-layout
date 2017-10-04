@@ -6,9 +6,7 @@ export class RectangleSideModel {
   constructor(
     public beginningCoordinates: CoordinatesModel,
     public endingCoordinates: CoordinatesModel,
-    public sideType: RectangleSideType,
-    public snapMode: SnappingMode,
-    public snapRadius: number
+    public sideType: RectangleSideType
   ) {
   }
 }
