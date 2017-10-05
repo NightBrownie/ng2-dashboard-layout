@@ -18,7 +18,6 @@ import {DashboardLayoutService} from '../services/dashboard-layout.service';
 export class ResizableDirective extends DashboardLayoutItemDirective implements AfterContentInit, OnDestroy {
   private startResizeCoordinates: CoordinatesModel;
   private startResizeDirection: string;
-  private cachedElementClientBoundingRect: ClientRect;
   private resizerSubs: Subscription[] = [];
 
   @Input() private resizable: boolean;
@@ -58,14 +57,9 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     this.dashboardLayoutService.unregisterDashboardLayoutItem(this);
   }
 
-  getElementClientBoundingRect(): ClientRect {
-    return this.cachedElementClientBoundingRect || super.getElementClientBoundingRect();
-  }
-
   private startResize(resizeStart: ResizeStartModel) {
     this.startResizeCoordinates = resizeStart.coordinates;
     this.startResizeDirection = resizeStart.resizeDirection;
-    this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
     this.dashboardLayoutService.startResize(this);
     this.activate();
@@ -88,7 +82,6 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     );
 
     this.startResizeCoordinates = null;
-    this.cachedElementClientBoundingRect = null;
     this.resizing.next(false);
   }
 }

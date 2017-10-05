@@ -114,7 +114,7 @@ export class DashboardLayoutService {
       const possibleOffset = this.getDragOffset(containerElement, dashboardLayoutItem, offset);
 
       const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
-      const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+      const layoutItemBoundingClientRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
       const updatedCoordinates = new CoordinatesModel(
         layoutItemBoundingClientRect.left - containerBoundingClientRect.left  + possibleOffset.x,
@@ -139,7 +139,7 @@ export class DashboardLayoutService {
     scalePreferred: boolean = false
   ) {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
-    const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
+    const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
     const resizeSubDirections = (resizeDirection || '').split('');
 
@@ -229,7 +229,7 @@ export class DashboardLayoutService {
   ) {
     const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
-    const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
+    const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
     const resizeSubDirections = (resizeDirection || '').split('');
 
@@ -328,7 +328,7 @@ export class DashboardLayoutService {
     offset: OffsetModel
   ): OffsetModel {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
-    const layoutItemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+    const layoutItemBoundingClientRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
     // try to snap item to other items
     const siblingVisibleRectangleSides = this.getSiblingVisibleRectangleSides(dashboardLayoutItem);
@@ -369,7 +369,7 @@ export class DashboardLayoutService {
     minSize: SizeModel = new SizeModel(0, 0)
   ): OffsetModel {
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
-    const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
+    const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
     let minWidth = minSize.width;
     let minHeight = minSize.height;
@@ -444,7 +444,7 @@ export class DashboardLayoutService {
     resizeOffset: OffsetModel,
     resizeDirection: string
   ): SizeModel {
-    const currentItemClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
+    const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
     const resultSize = new SizeModel(
       currentItemClientBoundingRect.width,
       currentItemClientBoundingRect.height,
@@ -534,7 +534,7 @@ export class DashboardLayoutService {
     const siblingsVisibleRectangleSides = [];
     const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
     siblingDashboardLayoutItems.forEach((item: DashboardLayoutItem) => {
-        const itemBoundingClientRect = item.getElementClientBoundingRect();
+        const itemBoundingClientRect = this.getItemElementClientBoundingRect(item);
         const itemVisibleRectangleSides = [];
 
         this.getVisibleRectangleSideParts(
@@ -602,7 +602,7 @@ export class DashboardLayoutService {
       .forEach((dashboardLayoutItem: DashboardLayoutItem) => {
         const newSideParts = [];
 
-        const itemBoundingClientRect = dashboardLayoutItem.getElementClientBoundingRect();
+        const itemBoundingClientRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
         sideParts.forEach((sidePart: RectangleSideModel) => {
           switch (side.sideType) {
@@ -918,5 +918,9 @@ export class DashboardLayoutService {
     }
 
     return boundedOffset;
+  }
+
+  private getItemElementClientBoundingRect(dashboardLayoutItem: DashboardLayoutItem) {
+    return dashboardLayoutItem.getElementClientBoundingRect();
   }
 }
