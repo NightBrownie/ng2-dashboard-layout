@@ -59,7 +59,6 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
   private startDrag(dragStartCoordinates: CoordinatesModel) {
     this.startDragCoordinates = dragStartCoordinates;
 
-    this.dashboardLayoutService.startDrag(this);
     this.activate();
     this.dragging.next(true);
   }

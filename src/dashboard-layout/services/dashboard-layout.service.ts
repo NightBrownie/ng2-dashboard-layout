@@ -94,12 +94,8 @@ export class DashboardLayoutService {
     dashboardLayoutItem.priority = currentPriority;
   }
 
-  public startDrag(dashboardLayoutItem: DashboardLayoutItem) {
-    this.startDashboardOperation(dashboardLayoutItem);
-  }
-
   public drag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
 
     if (containerElement) {
       dashboardLayoutItem.setTranslate(this.getDragOffset(containerElement, dashboardLayoutItem, offset));
@@ -108,27 +104,23 @@ export class DashboardLayoutService {
   }
 
   public endDrag(dashboardLayoutItem: DashboardLayoutItem, offset: OffsetModel) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
 
-    if (containerElement) {
-      const possibleOffset = this.getDragOffset(containerElement, dashboardLayoutItem, offset);
+    const possibleOffset = this.getDragOffset(containerElement, dashboardLayoutItem, offset);
 
-      const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
-      const layoutItemBoundingClientRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
+    const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
+    const layoutItemBoundingClientRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
-      const updatedCoordinates = new CoordinatesModel(
-        layoutItemBoundingClientRect.left - containerBoundingClientRect.left  + possibleOffset.x,
-        layoutItemBoundingClientRect.top - containerBoundingClientRect.top + possibleOffset.y
-      );
+    const updatedCoordinates = new CoordinatesModel(
+      layoutItemBoundingClientRect.left - containerBoundingClientRect.left  + possibleOffset.x,
+      layoutItemBoundingClientRect.top - containerBoundingClientRect.top + possibleOffset.y
+    );
 
-      dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
-      dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
-      dashboardLayoutItem.updateTransform();
-    }
-  }
+    dashboardLayoutItem.setPosition(this.getPercentageCoordinates(containerElement, updatedCoordinates));
+    dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
+    dashboardLayoutItem.updateTransform();
 
-  public startResize(dashboardLayoutItem: DashboardLayoutItem) {
-    this.startDashboardOperation(dashboardLayoutItem);
+    this.clearClientBoundingRectCaches(dashboardLayoutItem);
   }
 
   public resize(
@@ -138,7 +130,7 @@ export class DashboardLayoutService {
     minSize: SizeModel = new SizeModel(0, 0),
     scalePreferred: boolean = false
   ) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
     const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
     const resizeSubDirections = (resizeDirection || '').split('');
@@ -227,7 +219,7 @@ export class DashboardLayoutService {
     resizeDirection,
     minSize: SizeModel = new SizeModel(0, 0)
   ) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
     const containerBoundingClientRect = this.getContainerBoundingClientRect(containerElement);
     const currentItemClientBoundingRect = this.getItemElementClientBoundingRect(dashboardLayoutItem);
 
@@ -312,14 +304,8 @@ export class DashboardLayoutService {
     dashboardLayoutItem.setScale(new ScaleModel(0, 0));
     dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
     dashboardLayoutItem.updateTransform();
-  }
 
-  private startDashboardOperation(dashboardLayoutItem: DashboardLayoutItem) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
-
-    if (containerElement) {
-      this.containerClientBoundingRectMap.set(containerElement, containerElement.getBoundingClientRect());
-    }
+    this.clearClientBoundingRectCaches(dashboardLayoutItem);
   }
 
   private getDragOffset(
@@ -471,6 +457,191 @@ export class DashboardLayoutService {
     return resultSize;
   }
 
+  private getSnapOffset(
+    layoutItemTopLeftCoordinates: CoordinatesModel,
+    layoutItemBottomRightCoordinates: CoordinatesModel,
+    siblingVisibleRectangleSides: RectangleSideModel[],
+    snapMode: SnappingMode,
+    snapRadius: number,
+    snapDirection?: string
+  ): OffsetModel {
+    const snapOffset = new OffsetModel(0, 0);
+    siblingVisibleRectangleSides.forEach((side: SnappableRectangleSideModel) => {
+      //noinspection TsLint
+      const currentSnapMode = snapMode | side.snapMode;
+      const currentSnapSize = Math.max(snapRadius, side.snapRadius);
+
+      //noinspection TsLint
+      const isOuterSnappingEnabled = currentSnapMode & SnappingMode.outer;
+      //noinspection TsLint
+      const isInnerSnappingEnabled = currentSnapMode & SnappingMode.inner;
+
+      if (isOuterSnappingEnabled || isInnerSnappingEnabled) {
+        switch (side.sideType) {
+          case RectangleSideType.left:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y - currentSnapSize,
+                layoutItemBottomRightCoordinates.y + currentSnapSize,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              let dist;
+
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
+                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
+                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+            }
+            break;
+          case RectangleSideType.right:
+            if (this.checkParallelLinesOverlapOnY(
+                layoutItemTopLeftCoordinates.y - currentSnapSize,
+                layoutItemBottomRightCoordinates.y + currentSnapSize,
+                side.beginningCoordinates.y,
+                side.endingCoordinates.y)
+            ) {
+              let dist;
+
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
+                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
+                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
+                ) {
+                  snapOffset.x = dist;
+                }
+              }
+            }
+            break;
+          case RectangleSideType.top:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x - currentSnapSize,
+                layoutItemBottomRightCoordinates.x + currentSnapSize,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              let dist;
+
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
+                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
+                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+            }
+            break;
+          case RectangleSideType.bottom:
+            if (this.checkParallelLinesOverlapOnX(
+                layoutItemTopLeftCoordinates.x - currentSnapSize,
+                layoutItemBottomRightCoordinates.x + currentSnapSize,
+                side.beginningCoordinates.x,
+                side.endingCoordinates.x)
+            ) {
+              let dist;
+
+              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
+                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+
+              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
+                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
+
+                if (Math.abs(dist) <= currentSnapSize
+                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
+                ) {
+                  snapOffset.y = dist;
+                }
+              }
+            }
+            break;
+        }
+      }
+    });
+
+    return snapOffset;
+  }
+
+  private boundItemOffsetToDashboard (
+    containerBoundingClientRect,
+    layoutItemTopLeftCoordinates: CoordinatesModel,
+    layoutItemBottomRightCoordinates: CoordinatesModel,
+    offset: OffsetModel
+  ) {
+    const boundedOffset = new OffsetModel(0, 0);
+
+    // check dashboard bounds for x axis
+    if (layoutItemTopLeftCoordinates.x + offset.x >= containerBoundingClientRect.left
+      && layoutItemBottomRightCoordinates.x + offset.x <= containerBoundingClientRect.right
+    ) {
+      boundedOffset.x = offset.x;
+    } else if (layoutItemBottomRightCoordinates.x - layoutItemTopLeftCoordinates.x <= containerBoundingClientRect.width
+      && layoutItemBottomRightCoordinates.x + offset.x > containerBoundingClientRect.right
+    ) {
+      boundedOffset.x = containerBoundingClientRect.right - layoutItemBottomRightCoordinates.x;
+    } else {
+      boundedOffset.x = containerBoundingClientRect.left - layoutItemTopLeftCoordinates.x;
+    }
+
+    // check dashboard bounds for y axis
+    if (layoutItemTopLeftCoordinates.y + offset.y >= containerBoundingClientRect.top
+      && layoutItemBottomRightCoordinates.y + offset.y <= containerBoundingClientRect.bottom
+    ) {
+      boundedOffset.y = offset.y;
+    } else if (layoutItemBottomRightCoordinates.y - layoutItemTopLeftCoordinates.y <= containerBoundingClientRect.height
+      && layoutItemBottomRightCoordinates.y + offset.y > containerBoundingClientRect.bottom
+    ) {
+      boundedOffset.y = containerBoundingClientRect.bottom - layoutItemBottomRightCoordinates.y;
+    } else {
+      boundedOffset.y = containerBoundingClientRect.top - layoutItemTopLeftCoordinates.y;
+    }
+
+    return boundedOffset;
+  }
+
   private getPercentageCoordinates(
     containerElement: HTMLElement,
     coordinates: CoordinatesModel
@@ -498,21 +669,11 @@ export class DashboardLayoutService {
     );
   }
 
-  private getContainerBoundingClientRect(containerElement: HTMLElement): ClientRect {
-    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
-    if (!containerBoundingClientRect) {
-      containerBoundingClientRect = containerElement.getBoundingClientRect();
-      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
-    }
-
-    return containerBoundingClientRect;
-  }
-
   private getSiblings(
     dashboardLayoutItem: DashboardLayoutItem,
     filterSameHtmlElementItems = true
   ) {
-    const containerElement = this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
 
     const result = [];
     (this.containerElementDashboardLayoutItemsMap.get(containerElement) || [])
@@ -735,192 +896,29 @@ export class DashboardLayoutService {
     || firstLineEndingYCoordinate < secondLineBeginningYCoordinate);
   }
 
-  private getSnapOffset(
-    layoutItemTopLeftCoordinates: CoordinatesModel,
-    layoutItemBottomRightCoordinates: CoordinatesModel,
-    siblingVisibleRectangleSides: RectangleSideModel[],
-    snapMode: SnappingMode,
-    snapRadius: number,
-    snapDirection?: string
-  ): OffsetModel {
-    const snapOffset = new OffsetModel(0, 0);
-    siblingVisibleRectangleSides.forEach((side: SnappableRectangleSideModel) => {
-      //noinspection TsLint
-      const currentSnapMode = snapMode | side.snapMode;
-      const currentSnapSize = Math.max(snapRadius, side.snapRadius);
-
-      //noinspection TsLint
-      const isOuterSnappingEnabled = currentSnapMode & SnappingMode.outer;
-      //noinspection TsLint
-      const isInnerSnappingEnabled = currentSnapMode & SnappingMode.inner;
-
-      if (isOuterSnappingEnabled || isInnerSnappingEnabled) {
-        switch (side.sideType) {
-          case RectangleSideType.left:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y - currentSnapSize,
-                layoutItemBottomRightCoordinates.y + currentSnapSize,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              let dist;
-
-              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
-                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-                ) {
-                  snapOffset.x = dist;
-                }
-              }
-
-              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
-                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-                ) {
-                  snapOffset.x = dist;
-                }
-              }
-            }
-            break;
-          case RectangleSideType.right:
-            if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y - currentSnapSize,
-                layoutItemBottomRightCoordinates.y + currentSnapSize,
-                side.beginningCoordinates.y,
-                side.endingCoordinates.y)
-            ) {
-              let dist;
-
-              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
-                dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-                ) {
-                  snapOffset.x = dist;
-                }
-              }
-
-              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
-                dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
-                ) {
-                  snapOffset.x = dist;
-                }
-              }
-            }
-            break;
-          case RectangleSideType.top:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x - currentSnapSize,
-                layoutItemBottomRightCoordinates.x + currentSnapSize,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              let dist;
-
-              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
-                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-                ) {
-                  snapOffset.y = dist;
-                }
-              }
-
-              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
-                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-                ) {
-                  snapOffset.y = dist;
-                }
-              }
-            }
-            break;
-          case RectangleSideType.bottom:
-            if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x - currentSnapSize,
-                layoutItemBottomRightCoordinates.x + currentSnapSize,
-                side.beginningCoordinates.x,
-                side.endingCoordinates.x)
-            ) {
-              let dist;
-
-              if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
-                dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-                ) {
-                  snapOffset.y = dist;
-                }
-              }
-
-              if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
-                dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
-
-                if (Math.abs(dist) <= currentSnapSize
-                  && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
-                ) {
-                  snapOffset.y = dist;
-                }
-              }
-            }
-            break;
-        }
-      }
-    });
-
-    return snapOffset;
+  private getItemContainerElement(dashboardLayoutItem: DashboardLayoutItem) {
+    return this.dashboardLayoutItemContainerElementMap.get(dashboardLayoutItem);
   }
 
-  private boundItemOffsetToDashboard (
-    containerBoundingClientRect,
-    layoutItemTopLeftCoordinates: CoordinatesModel,
-    layoutItemBottomRightCoordinates: CoordinatesModel,
-    offset: OffsetModel
-  ) {
-    const boundedOffset = new OffsetModel(0, 0);
-
-    // check dashboard bounds for x axis
-    if (layoutItemTopLeftCoordinates.x + offset.x >= containerBoundingClientRect.left
-      && layoutItemBottomRightCoordinates.x + offset.x <= containerBoundingClientRect.right
-    ) {
-      boundedOffset.x = offset.x;
-    } else if (layoutItemBottomRightCoordinates.x - layoutItemTopLeftCoordinates.x <= containerBoundingClientRect.width
-      && layoutItemBottomRightCoordinates.x + offset.x > containerBoundingClientRect.right
-    ) {
-      boundedOffset.x = containerBoundingClientRect.right - layoutItemBottomRightCoordinates.x;
-    } else {
-      boundedOffset.x = containerBoundingClientRect.left - layoutItemTopLeftCoordinates.x;
+  private getContainerBoundingClientRect(containerElement: HTMLElement): ClientRect {
+    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
+    if (!containerBoundingClientRect) {
+      containerBoundingClientRect = containerElement.getBoundingClientRect();
+      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
     }
 
-    // check dashboard bounds for y axis
-    if (layoutItemTopLeftCoordinates.y + offset.y >= containerBoundingClientRect.top
-      && layoutItemBottomRightCoordinates.y + offset.y <= containerBoundingClientRect.bottom
-    ) {
-      boundedOffset.y = offset.y;
-    } else if (layoutItemBottomRightCoordinates.y - layoutItemTopLeftCoordinates.y <= containerBoundingClientRect.height
-      && layoutItemBottomRightCoordinates.y + offset.y > containerBoundingClientRect.bottom
-    ) {
-      boundedOffset.y = containerBoundingClientRect.bottom - layoutItemBottomRightCoordinates.y;
-    } else {
-      boundedOffset.y = containerBoundingClientRect.top - layoutItemTopLeftCoordinates.y;
-    }
-
-    return boundedOffset;
+    return containerBoundingClientRect;
   }
 
   private getItemElementClientBoundingRect(dashboardLayoutItem: DashboardLayoutItem) {
     return dashboardLayoutItem.getElementClientBoundingRect();
+  }
+
+  private clearClientBoundingRectCaches(dashboardLayoutItem: DashboardLayoutItem) {
+    const containerElement = this.getItemContainerElement(dashboardLayoutItem);
+
+    if (this.containerClientBoundingRectMap.has(containerElement)) {
+      this.containerClientBoundingRectMap.delete(containerElement);
+    }
   }
 }

@@ -61,7 +61,6 @@ export class ResizableDirective extends DashboardLayoutItemDirective implements 
     this.startResizeCoordinates = resizeStart.coordinates;
     this.startResizeDirection = resizeStart.resizeDirection;
 
-    this.dashboardLayoutService.startResize(this);
     this.activate();
     this.resizing.next(true);
   }
