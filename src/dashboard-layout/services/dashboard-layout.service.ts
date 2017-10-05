@@ -707,8 +707,6 @@ export class DashboardLayoutService {
               }
               break;
           }
-
-          newSideParts.push(sidePart);
         });
 
         sideParts = newSideParts;
