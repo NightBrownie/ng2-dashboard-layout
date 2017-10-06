@@ -16,7 +16,6 @@ import {DashboardLayoutItemDirective} from './dashboard-layout-item.directive';
 })
 export class DraggableDirective extends DashboardLayoutItemDirective implements AfterContentInit, OnDestroy {
   private startDragCoordinates: CoordinatesModel;
-  private cachedElementClientBoundingRect: ClientRect;
   private dragHandleSubs: Subscription[] = [];
 
   @Input() private draggable: boolean;
@@ -56,15 +55,11 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
     this.dashboardLayoutService.unregisterDashboardLayoutItem(this);
   }
 
-  getElementClientBoundingRect(): ClientRect {
-    return this.cachedElementClientBoundingRect || super.getElementClientBoundingRect();
-  }
 
   private startDrag(dragStartCoordinates: CoordinatesModel) {
     this.startDragCoordinates = dragStartCoordinates;
-    this.cachedElementClientBoundingRect = super.getElementClientBoundingRect();
 
-    this.dashboardLayoutService.startDrag(this);
+    this.activate();
     this.dragging.next(true);
   }
 
@@ -75,7 +70,6 @@ export class DraggableDirective extends DashboardLayoutItemDirective implements 
   private endDrag(dragEndCoordinates: CoordinatesModel) {
     this.dashboardLayoutService.endDrag(this, this.getOffset(this.startDragCoordinates, dragEndCoordinates));
     this.startDragCoordinates = null;
-    this.cachedElementClientBoundingRect = null;
     this.dragging.next(false);
   }
 }

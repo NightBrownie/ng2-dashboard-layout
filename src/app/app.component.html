@@ -3,11 +3,15 @@
     class="draggable-container"
     draggable
     resizable
-    (dragging)="firstContainerDragging = $event"
-    (resizing)="firstContainerResizing = $event"
+    (dragging)="isDraggingFirstContainer = $event"
+    (resizing)="isResizingFirstContainer = $event"
+    [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+    [snapRadius]="15"
+    (priorityChanged)="firstContainerPriority = $event"
+    [style.z-index]="baseZIndex + firstContainerPriority"
     [ngClass]="{
-      'draggable-container_dragging': firstContainerDragging,
-      'draggable-container_resizing': firstContainerResizing
+      'draggable-container_dragging': isDraggingFirstContainer,
+      'draggable-container_resizing': isResizingFirstContainer
     }"
   >
     <div
@@ -19,11 +23,15 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
-        (dragging)="firstContainerInnerDragging = $event"
-        (resizing)="firstContainerInnerResizing = $event"
+        (dragging)="isDraggingFirstConrainerInner = $event"
+        (resizing)="isResizingFirstContainerInner = $event"
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
+        (priorityChanged)="firstContainerInnerPriority = $event"
+        [style.z-index]="baseZIndex + firstContainerInnerPriority"
         [ngClass]="{
-          'draggable-container_dragging': firstContainerInnerDragging,
-          'draggable-container_resizing': firstContainerInnerResizing
+          'draggable-container_dragging': isDraggingFirstConrainerInner,
+          'draggable-container_resizing': isResizingFirstContainerInner
         }"
       >
         <div
@@ -35,80 +43,84 @@
         ></div>
         <div
           class="resizer resizer_horizontal resizer_n"
-          resizer="n"
+          resizeHandle="n"
         ></div>
         <div
           class="resizer resizer_horizontal resizer_s"
-          resizer="s"
+          resizeHandle="s"
         ></div>
         <div
           class="resizer resizer_vertical resizer_e"
-          resizer="e"
+          resizeHandle="e"
         ></div>
         <div
           class="resizer resizer_vertical resizer_w"
-          resizer="w"
+          resizeHandle="w"
         ></div>
         <div
           class="resizer resizer_corner resizer_ne"
-          resizer="ne"
+          resizeHandle="ne"
         ></div>
         <div
           class="resizer resizer_corner resizer_nw"
-          resizer="nw"
+          resizeHandle="nw"
         ></div>
         <div
           class="resizer resizer_corner resizer_se"
-          resizer="se"
+          resizeHandle="se"
         ></div>
         <div
           class="resizer resizer_corner resizer_sw"
-          resizer="sw"
+          resizeHandle="sw"
         ></div>
       </div>
     </div>
     <div
       class="resizer resizer_horizontal resizer_n"
-      resizer="n"
+      resizeHandle="n"
     ></div>
     <div
       class="resizer resizer_horizontal resizer_s"
-      resizer="s"
+      resizeHandle="s"
     ></div>
     <div
       class="resizer resizer_vertical resizer_e"
-      resizer="e"
+      resizeHandle="e"
     ></div>
     <div
       class="resizer resizer_vertical resizer_w"
-      resizer="w"
+      resizeHandle="w"
     ></div>
     <div
       class="resizer resizer_corner resizer_ne"
-      resizer="ne"
+      resizeHandle="ne"
     ></div>
     <div
       class="resizer resizer_corner resizer_nw"
-      resizer="nw"
+      resizeHandle="nw"
     ></div>
     <div
       class="resizer resizer_corner resizer_se"
-      resizer="se"
+      resizeHandle="se"
     ></div>
     <div
       class="resizer resizer_corner resizer_sw"
-      resizer="sw"
+      resizeHandle="sw"
     ></div>
   </div>
   <div
     class="draggable-container"
     draggable
     resizable
-    (dragging)="secondContainerDragging = $event"
-    (resizing)="secondContainerResizing = $event"
+    (dragging)="isDraggingSecondContainer = $event"
+    (resizing)="isResizingSecondContainer = $event"
+    [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+    [snapRadius]="15"
+    (priorityChanged)="secondContainerPriority = $event"
+    [style.z-index]="baseZIndex + secondContainerPriority"
     [ngClass]="{
-      'draggable-container_dragging': secondContainerDragging,
-      'draggable-container_resizing': secondContainerResizing
+      'draggable-container_dragging': isDraggingSecondContainer,
+      'draggable-container_resizing': isResizingSecondContainer
     }"
   >
     <div
@@ -120,11 +132,15 @@
         class="draggable-container draggable-container_inner"
         draggable
         resizable
-        (dragging)="secondContainerInnerDragging = $event"
-        (resizing)="secondContainerInnerResizing = $event"
+        (dragging)="isDraggingSecondContainerInner = $event"
+        (resizing)="isResizingSecondContainerInner = $event"
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
+        (priorityChanged)="secondContainerInnerPriority = $event"
+        [style.z-index]="baseZIndex + secondContainerInnerPriority"
         [ngClass]="{
-          'draggable-container_dragging': secondContainerInnerDragging,
-          'draggable-container_resizing': secondContainerInnerResizing
+          'draggable-container_dragging': isDraggingSecondContainerInner,
+          'draggable-container_resizing': isResizingSecondContainerInner
         }"
       >
         <div
@@ -136,69 +152,178 @@
         ></div>
         <div
           class="resizer resizer_horizontal resizer_n"
-          resizer="n"
+          resizeHandle="n"
         ></div>
         <div
           class="resizer resizer_horizontal resizer_s"
-          resizer="s"
+          resizeHandle="s"
         ></div>
         <div
           class="resizer resizer_vertical resizer_e"
-          resizer="e"
+          resizeHandle="e"
         ></div>
         <div
           class="resizer resizer_vertical resizer_w"
-          resizer="w"
+          resizeHandle="w"
         ></div>
         <div
           class="resizer resizer_corner resizer_ne"
-          resizer="ne"
+          resizeHandle="ne"
         ></div>
         <div
           class="resizer resizer_corner resizer_nw"
-          resizer="nw"
+          resizeHandle="nw"
         ></div>
         <div
           class="resizer resizer_corner resizer_se"
-          resizer="se"
+          resizeHandle="se"
         ></div>
         <div
           class="resizer resizer_corner resizer_sw"
-          resizer="sw"
+          resizeHandle="sw"
         ></div>
       </div>
     </div>
     <div
       class="resizer resizer_horizontal resizer_n"
-      resizer="n"
+      resizeHandle="n"
     ></div>
     <div
       class="resizer resizer_horizontal resizer_s"
-      resizer="s"
+      resizeHandle="s"
     ></div>
     <div
       class="resizer resizer_vertical resizer_e"
-      resizer="e"
+      resizeHandle="e"
     ></div>
     <div
       class="resizer resizer_vertical resizer_w"
-      resizer="w"
+      resizeHandle="w"
     ></div>
     <div
       class="resizer resizer_corner resizer_ne"
-      resizer="ne"
+      resizeHandle="ne"
     ></div>
     <div
       class="resizer resizer_corner resizer_nw"
-      resizer="nw"
+      resizeHandle="nw"
     ></div>
     <div
       class="resizer resizer_corner resizer_se"
-      resizer="se"
+      resizeHandle="se"
     ></div>
     <div
       class="resizer resizer_corner resizer_sw"
-      resizer="sw"
+      resizeHandle="sw"
+    ></div>
+  </div>
+  <div
+    class="draggable-container"
+    draggable
+    resizable
+    (dragging)="isDraggingThirdContainer = $event"
+    (resizing)="isResizingThirdContainer = $event"
+    [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+    [snapRadius]="15"
+    (priorityChanged)="thirdContainerPriority = $event"
+    [style.z-index]="baseZIndex + thirdContainerPriority"
+    [ngClass]="{
+      'draggable-container_dragging': isDraggingThirdContainer,
+      'draggable-container_resizing': isResizingThirdContainer
+    }"
+  >
+    <div
+      class="draggable-container__header"
+      dragHandle
+    >Test draggable 3</div>
+    <div class="draggable-container__body">
+      <div
+        class="draggable-container draggable-container_inner"
+        draggable
+        resizable
+        (dragging)="isDraggingThirdContainerInner = $event"
+        (resizing)="isResizingThirdContainerInner = $event"
+        [snapToDashboardItemsMode]="bitwiseOr(SnappingMode.inner, SnappingMode.outer)"
+        [snapRadius]="15"
+        (priorityChanged)="thirdContainerInnerPriority = $event"
+        [style.z-index]="baseZIndex + thirdContainerInnerPriority"
+        [ngClass]="{
+          'draggable-container_dragging': isDraggingThirdContainerInner,
+          'draggable-container_resizing': isResizingThirdContainerInner
+        }"
+      >
+        <div
+          class="draggable-container__header"
+          dragHandle
+        >Inner test draggable 3</div>
+        <div
+          class="draggable-container__body"
+        ></div>
+        <div
+          class="resizer resizer_horizontal resizer_n"
+          resizeHandle="n"
+        ></div>
+        <div
+          class="resizer resizer_horizontal resizer_s"
+          resizeHandle="s"
+        ></div>
+        <div
+          class="resizer resizer_vertical resizer_e"
+          resizeHandle="e"
+        ></div>
+        <div
+          class="resizer resizer_vertical resizer_w"
+          resizeHandle="w"
+        ></div>
+        <div
+          class="resizer resizer_corner resizer_ne"
+          resizeHandle="ne"
+        ></div>
+        <div
+          class="resizer resizer_corner resizer_nw"
+          resizeHandle="nw"
+        ></div>
+        <div
+          class="resizer resizer_corner resizer_se"
+          resizeHandle="se"
+        ></div>
+        <div
+          class="resizer resizer_corner resizer_sw"
+          resizeHandle="sw"
+        ></div>
+      </div>
+    </div>
+    <div
+      class="resizer resizer_horizontal resizer_n"
+      resizeHandle="n"
+    ></div>
+    <div
+      class="resizer resizer_horizontal resizer_s"
+      resizeHandle="s"
+    ></div>
+    <div
+      class="resizer resizer_vertical resizer_e"
+      resizeHandle="e"
+    ></div>
+    <div
+      class="resizer resizer_vertical resizer_w"
+      resizeHandle="w"
+    ></div>
+    <div
+      class="resizer resizer_corner resizer_ne"
+      resizeHandle="ne"
+    ></div>
+    <div
+      class="resizer resizer_corner resizer_nw"
+      resizeHandle="nw"
+    ></div>
+    <div
+      class="resizer resizer_corner resizer_se"
+      resizeHandle="se"
+    ></div>
+    <div
+      class="resizer resizer_corner resizer_sw"
+      resizeHandle="sw"
     ></div>
   </div>
 </div>
