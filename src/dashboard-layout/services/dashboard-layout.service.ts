@@ -5,7 +5,6 @@ import {OffsetModel, CoordinatesModel, ScaleModel, SizeModel, RectangleSideModel
 import {DimensionType, SnappingMode, RectangleSideType, DirectionType} from '../enums';
 
 import {DEFAULT_PRESCISION_CHARS} from '../configs/default.config';
-import {SnappableRectangleSideModel} from '../models/snappable-rectangle-side.model';
 
 
 @Injectable()
@@ -465,22 +464,18 @@ export class DashboardLayoutService {
     snapDirection?: string
   ): OffsetModel {
     const snapOffset = new OffsetModel(0, 0);
-    siblingVisibleRectangleSides.forEach((side: SnappableRectangleSideModel) => {
+    siblingVisibleRectangleSides.forEach((side: RectangleSideModel) => {
       //noinspection TsLint
-      const currentSnapMode = snapMode | side.snapMode;
-      const currentSnapSize = Math.max(snapRadius, side.snapRadius);
-
+      const isOuterSnappingEnabled = snapMode & SnappingMode.outer;
       //noinspection TsLint
-      const isOuterSnappingEnabled = currentSnapMode & SnappingMode.outer;
-      //noinspection TsLint
-      const isInnerSnappingEnabled = currentSnapMode & SnappingMode.inner;
+      const isInnerSnappingEnabled = snapMode & SnappingMode.inner;
 
       if (isOuterSnappingEnabled || isInnerSnappingEnabled) {
         switch (side.sideType) {
           case RectangleSideType.left:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y - currentSnapSize,
-                layoutItemBottomRightCoordinates.y + currentSnapSize,
+                layoutItemTopLeftCoordinates.y - snapRadius,
+                layoutItemBottomRightCoordinates.y + snapRadius,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
@@ -489,7 +484,7 @@ export class DashboardLayoutService {
               if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
                 dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
                 ) {
                   snapOffset.x = dist;
@@ -499,7 +494,7 @@ export class DashboardLayoutService {
               if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
                 dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
                 ) {
                   snapOffset.x = dist;
@@ -509,8 +504,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.right:
             if (this.checkParallelLinesOverlapOnY(
-                layoutItemTopLeftCoordinates.y - currentSnapSize,
-                layoutItemBottomRightCoordinates.y + currentSnapSize,
+                layoutItemTopLeftCoordinates.y - snapRadius,
+                layoutItemBottomRightCoordinates.y + snapRadius,
                 side.beginningCoordinates.y,
                 side.endingCoordinates.y)
             ) {
@@ -519,7 +514,7 @@ export class DashboardLayoutService {
               if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.west))) {
                 dist = side.beginningCoordinates.x - layoutItemTopLeftCoordinates.x;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
                 ) {
                   snapOffset.x = dist;
@@ -529,7 +524,7 @@ export class DashboardLayoutService {
               if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.east))) {
                 dist = side.beginningCoordinates.x - layoutItemBottomRightCoordinates.x;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.x) || snapOffset.x === 0)
                 ) {
                   snapOffset.x = dist;
@@ -539,8 +534,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.top:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x - currentSnapSize,
-                layoutItemBottomRightCoordinates.x + currentSnapSize,
+                layoutItemTopLeftCoordinates.x - snapRadius,
+                layoutItemBottomRightCoordinates.x + snapRadius,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
@@ -549,7 +544,7 @@ export class DashboardLayoutService {
               if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
                 dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
                 ) {
                   snapOffset.y = dist;
@@ -559,7 +554,7 @@ export class DashboardLayoutService {
               if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
                 dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
                 ) {
                   snapOffset.y = dist;
@@ -569,8 +564,8 @@ export class DashboardLayoutService {
             break;
           case RectangleSideType.bottom:
             if (this.checkParallelLinesOverlapOnX(
-                layoutItemTopLeftCoordinates.x - currentSnapSize,
-                layoutItemBottomRightCoordinates.x + currentSnapSize,
+                layoutItemTopLeftCoordinates.x - snapRadius,
+                layoutItemBottomRightCoordinates.x + snapRadius,
                 side.beginningCoordinates.x,
                 side.endingCoordinates.x)
             ) {
@@ -579,7 +574,7 @@ export class DashboardLayoutService {
               if (isOuterSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.north))) {
                 dist = side.beginningCoordinates.y - layoutItemTopLeftCoordinates.y;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
                 ) {
                   snapOffset.y = dist;
@@ -589,7 +584,7 @@ export class DashboardLayoutService {
               if (isInnerSnappingEnabled && (!snapDirection || snapDirection.includes(DirectionType.south))) {
                 dist = side.beginningCoordinates.y - layoutItemBottomRightCoordinates.y;
 
-                if (Math.abs(dist) <= currentSnapSize
+                if (Math.abs(dist) <= snapRadius
                   && (Math.abs(dist) < Math.abs(snapOffset.y) || snapOffset.y === 0)
                 ) {
                   snapOffset.y = dist;
@@ -695,7 +690,6 @@ export class DashboardLayoutService {
     const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
     siblingDashboardLayoutItems.forEach((item: DashboardLayoutItem) => {
         const itemBoundingClientRect = this.getItemElementClientBoundingRect(item);
-        const itemVisibleRectangleSides = [];
 
         this.getVisibleRectangleSideParts(
           siblingDashboardLayoutItems,
@@ -705,7 +699,7 @@ export class DashboardLayoutService {
             RectangleSideType.left
           ),
           item.priority
-        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+        ).forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(side));
 
         this.getVisibleRectangleSideParts(
           siblingDashboardLayoutItems,
@@ -715,7 +709,7 @@ export class DashboardLayoutService {
             RectangleSideType.right,
           ),
           item.priority
-        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+        ).forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(side));
 
         this.getVisibleRectangleSideParts(
           siblingDashboardLayoutItems,
@@ -725,7 +719,7 @@ export class DashboardLayoutService {
             RectangleSideType.top,
           ),
           item.priority
-        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
+        ).forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(side));
 
         this.getVisibleRectangleSideParts(
           siblingDashboardLayoutItems,
@@ -735,16 +729,7 @@ export class DashboardLayoutService {
             RectangleSideType.bottom,
           ),
           item.priority
-        ).forEach((side: RectangleSideModel) => itemVisibleRectangleSides.push(side));
-
-        itemVisibleRectangleSides.forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(
-          new SnappableRectangleSideModel(
-          side.beginningCoordinates,
-          side.endingCoordinates,
-          side.sideType,
-          item.snapToDashboardItemsMode,
-          item.snapRadius
-        )));
+        ).forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(side));
       });
 
     return siblingsVisibleRectangleSides;
