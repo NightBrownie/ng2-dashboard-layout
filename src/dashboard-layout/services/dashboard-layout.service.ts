@@ -18,8 +18,7 @@ export class DashboardLayoutService {
   private dashboardLayoutItemContainerElementMap: Map<DashboardLayoutItem, HTMLElement>
     = new Map<DashboardLayoutItem, HTMLElement>();
 
-  private containerClientBoundingRectMap: Map<HTMLElement, ClientRect>
-    = new Map<HTMLElement, ClientRect>();
+  private elementClientBoundingRectCache: Map<HTMLElement, ClientRect> = new Map<HTMLElement, ClientRect>();
 
   constructor() {
   }
@@ -901,24 +900,48 @@ export class DashboardLayoutService {
   }
 
   private getContainerBoundingClientRect(containerElement: HTMLElement): ClientRect {
-    let containerBoundingClientRect = this.containerClientBoundingRectMap.get(containerElement);
+    let containerBoundingClientRect = this.elementClientBoundingRectCache.get(containerElement);
     if (!containerBoundingClientRect) {
       containerBoundingClientRect = containerElement.getBoundingClientRect();
-      this.containerClientBoundingRectMap.set(containerElement, containerBoundingClientRect);
+      this.elementClientBoundingRectCache.set(containerElement, containerBoundingClientRect);
     }
 
     return containerBoundingClientRect;
   }
 
   private getItemElementClientBoundingRect(dashboardLayoutItem: DashboardLayoutItem) {
-    return dashboardLayoutItem.getElementClientBoundingRect();
+    const itemHtmlElement = this.dashboardLayoutItemElementMap.get(dashboardLayoutItem);
+
+    let itemElementClientBoundingRect = null;
+    if (itemHtmlElement) {
+      itemElementClientBoundingRect = this.elementClientBoundingRectCache.get(itemHtmlElement);
+
+      if (!itemElementClientBoundingRect) {
+        itemElementClientBoundingRect = dashboardLayoutItem.getElementClientBoundingRect();
+        this.elementClientBoundingRectCache.set(itemHtmlElement, itemElementClientBoundingRect);
+      }
+    }
+
+    return itemElementClientBoundingRect;
   }
 
+  // must me called to invalidate caches after drag end (probably should be called in drag start)
   private clearClientBoundingRectCaches(dashboardLayoutItem: DashboardLayoutItem) {
     const containerElement = this.getItemContainerElement(dashboardLayoutItem);
 
-    if (this.containerClientBoundingRectMap.has(containerElement)) {
-      this.containerClientBoundingRectMap.delete(containerElement);
+    if (this.elementClientBoundingRectCache.has(containerElement)) {
+      this.elementClientBoundingRectCache.delete(containerElement);
+    }
+
+    const currentDashboardItems = this.containerElementDashboardLayoutItemsMap.get(containerElement);
+    if (currentDashboardItems) {
+      currentDashboardItems.forEach((item: DashboardLayoutItem) => {
+        const itemHtmlElement = this.dashboardLayoutItemElementMap.get(dashboardLayoutItem);
+
+        if (itemHtmlElement && this.elementClientBoundingRectCache.has(itemHtmlElement)) {
+          this.elementClientBoundingRectCache.delete(itemHtmlElement);
+        }
+      });
     }
   }
 }
