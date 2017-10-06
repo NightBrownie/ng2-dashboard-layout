@@ -17,6 +17,8 @@ export class DashboardLayoutService {
   private dashboardLayoutItemContainerElementMap: Map<DashboardLayoutItem, HTMLElement>
     = new Map<DashboardLayoutItem, HTMLElement>();
 
+  private dashboardLayoutItemSiblingsVisibleSidesCache: Map<DashboardLayoutItem, RectangleSideModel[]>
+    = new Map<DashboardLayoutItem, RectangleSideModel[]>();
   private elementClientBoundingRectCache: Map<HTMLElement, ClientRect> = new Map<HTMLElement, ClientRect>();
 
   constructor() {
@@ -118,7 +120,8 @@ export class DashboardLayoutService {
     dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
     dashboardLayoutItem.updateTransform();
 
-    this.clearClientBoundingRectCaches(dashboardLayoutItem);
+    this.clearDashboardLayoutItemClientBoundingRectCaches(dashboardLayoutItem);
+    this.clearDashboardLayoutItemSiblingsVisibleSidesCache(dashboardLayoutItem);
   }
 
   public resize(
@@ -303,7 +306,8 @@ export class DashboardLayoutService {
     dashboardLayoutItem.setTranslate(new OffsetModel(0, 0));
     dashboardLayoutItem.updateTransform();
 
-    this.clearClientBoundingRectCaches(dashboardLayoutItem);
+    this.clearDashboardLayoutItemClientBoundingRectCaches(dashboardLayoutItem);
+    this.clearDashboardLayoutItemSiblingsVisibleSidesCache(dashboardLayoutItem);
   }
 
   private getDragOffset(
@@ -686,9 +690,12 @@ export class DashboardLayoutService {
   }
 
   private getSiblingVisibleRectangleSides(dashboardLayoutItem: DashboardLayoutItem) {
-    const siblingsVisibleRectangleSides = [];
-    const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
-    siblingDashboardLayoutItems.forEach((item: DashboardLayoutItem) => {
+    let siblingsVisibleRectangleSides = this.dashboardLayoutItemSiblingsVisibleSidesCache.get(dashboardLayoutItem);
+
+    if (!siblingsVisibleRectangleSides) {
+      siblingsVisibleRectangleSides = [];
+      const siblingDashboardLayoutItems = this.getSiblings(dashboardLayoutItem);
+      siblingDashboardLayoutItems.forEach((item: DashboardLayoutItem) => {
         const itemBoundingClientRect = this.getItemElementClientBoundingRect(item);
 
         this.getVisibleRectangleSideParts(
@@ -731,6 +738,9 @@ export class DashboardLayoutService {
           item.priority
         ).forEach((side: RectangleSideModel) => siblingsVisibleRectangleSides.push(side));
       });
+
+      this.dashboardLayoutItemSiblingsVisibleSidesCache.set(dashboardLayoutItem, siblingsVisibleRectangleSides);
+    }
 
     return siblingsVisibleRectangleSides;
   }
@@ -860,6 +870,12 @@ export class DashboardLayoutService {
     return sideParts;
   }
 
+  private clearDashboardLayoutItemSiblingsVisibleSidesCache(dashboardLayoutItem: DashboardLayoutItem) {
+    if (this.dashboardLayoutItemSiblingsVisibleSidesCache.has(dashboardLayoutItem)) {
+      this.dashboardLayoutItemSiblingsVisibleSidesCache.delete(dashboardLayoutItem);
+    }
+  }
+
   private checkParallelLinesOverlapOnX(
     firstLineBeginningXCoordinate: number,
     firstLineEndingXCoordinate: number,
@@ -911,7 +927,7 @@ export class DashboardLayoutService {
   }
 
   // must me called to invalidate caches after drag end (probably should be called in drag start)
-  private clearClientBoundingRectCaches(dashboardLayoutItem: DashboardLayoutItem) {
+  private clearDashboardLayoutItemClientBoundingRectCaches(dashboardLayoutItem: DashboardLayoutItem) {
     const containerElement = this.getItemContainerElement(dashboardLayoutItem);
 
     if (this.elementClientBoundingRectCache.has(containerElement)) {
